@@ -1,0 +1,13 @@
+build
+env26/
+env32/
+*.egg
+*.egg-info
+*.pyc
+*$py.class
+.coverage
+dist/
+*~
+.tox
+nosetests.xml
+pyramid_jinja2/coverage.xml

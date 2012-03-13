@@ -1,0 +1,62 @@
+##############################################################################
+#
+# Copyright (c) 2010 Agendaless Consulting and Contributors.
+# All Rights Reserved.
+#
+# This software is subject to the provisions of the BSD-like license at
+# http://www.repoze.org/LICENSE.txt.  A copy of the license should accompany
+# this distribution.  THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL
+# EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO,
+# THE IMPLIED WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND
+# FITNESS FOR A PARTICULAR PURPOSE
+#
+##############################################################################
+
+import os
+
+from setuptools import setup, find_packages
+
+here = os.path.abspath(os.path.dirname(__file__))
+README = open(os.path.join(here, 'README.txt')).read()
+CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
+
+requires = [
+    'pyramid>=1.0.2', # wsgiref server entry point
+    'Mako>=0.3.6' # strict undefined
+]
+
+try:
+    import wsgiref
+except ImportError:
+    requires.append('wsgiref')
+
+
+setup(name='pyramid_mako',
+      version='0.1',
+      description='Mako template bindings for the Pyramid web framework',
+      long_description=README + '\n\n' + CHANGES,
+      classifiers=[
+        "Intended Audience :: Developers",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2.5",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.2",
+        "Framework :: Pylons",
+        "License :: Repoze Public License",
+        ],
+      keywords='web wsgi pylons pyramid',
+      author="Carlos de la Guardia",
+      author_email="pylons-discuss@googlegroups.com",
+      url="https://github.com/Pylons/pyramid_mako",
+      license="BSD-derived (http://www.repoze.org/LICENSE.txt)",
+      packages=find_packages(),
+      include_package_data=True,
+      zip_safe=False,
+      install_requires=requires,
+      tests_require=requires + ['WebTest >= 1.3.1'], #py3 compat
+      test_suite="pyramid_mako.tests",
+      entry_points="""
+      """,
+      )

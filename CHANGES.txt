@@ -1,0 +1,5 @@
+0.1 (2012-03-12)
+================
+
+- First release. Extracted from Pyramid core.
+

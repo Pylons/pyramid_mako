@@ -1,0 +1,3 @@
+recursive-include pyramid_mako *.*_tmpl *.mako *.mak *.ico *.png *.py *.pot *.cfg *.mo *.po *.ini
+recursive-include docs *.css Makefile *.gif *.rst *.py *.gitignore
+include *.txt *.ini
