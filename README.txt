@@ -3,8 +3,10 @@
 
 These are bindings for the `Mako templating system
 <http://www.makotemplates.org/>`_ for the `Pyramid
-<http://docs.pylonsproject.org/>`_ web framework.
+<http://docs.pylonsproject.org/en/latest/docs/pyramid.html/>`_ web framework.
 
-See http://docs.pylonsproject.org/projects/pyramid_mako/
-for documentation or ``index.rst`` in the ``docs`` sub
-directory of the source distribution.
+.. warning::
+
+   This repository was created with the idea that it would eventually move
+   Mako support out of the core, which has not happened yet.
+   It is now outdated.
