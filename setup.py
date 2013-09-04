@@ -21,7 +21,7 @@ README = open(os.path.join(here, 'README.txt')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
-    'pyramid>=1.5.0',
+    'pyramid>=1.5a1',
     'Mako>=0.3.6' # strict undefined
 ]
 
@@ -56,5 +56,7 @@ setup(name='pyramid_mako',
       tests_require=tests_require,
       test_suite="pyramid_mako.tests",
       entry_points="""
+      [pyramid.internals.renderers]
+      mako=pyramid_mako:includeme
       """,
       )
