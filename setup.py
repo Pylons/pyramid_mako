@@ -21,15 +21,13 @@ README = open(os.path.join(here, 'README.txt')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
-    'pyramid>=1.0.2', # wsgiref server entry point
+    'pyramid>=1.5a1',
     'Mako>=0.3.6' # strict undefined
 ]
 
-try:
-    import wsgiref
-except ImportError:
-    requires.append('wsgiref')
-
+tests_require = [
+    'WebTest >= 1.3.1', # py3 compat
+    ]
 
 setup(name='pyramid_mako',
       version='0.1',
@@ -55,8 +53,10 @@ setup(name='pyramid_mako',
       include_package_data=True,
       zip_safe=False,
       install_requires=requires,
-      tests_require=requires + ['WebTest >= 1.3.1'], #py3 compat
+      tests_require=tests_require,
       test_suite="pyramid_mako.tests",
       entry_points="""
+      [pyramid.internals.renderers]
+      mako=pyramid_mako:includeme
       """,
       )
