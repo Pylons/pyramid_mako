@@ -140,6 +140,37 @@ mako.directories
   search for templates.  Each can optionally be an absolute resource
   specification (e.g. ``package:subdirectory/``).
 
+Unit Testing
+============
+
+When you are running unit tests, you will be required to use
+``config.include('pyramid_mako')`` to add :term:`pyramid_mako` so that it's
+renderers are added to the config and can be used.::
+
+    from pyramid import testing
+    from pyramid.response import Response
+    from pyramid.renderers import render
+    
+    # The view we want to test
+    def some_view(request):
+        return Response(render('mypkg:templates/home.mako', {'var': 'testing'}))
+
+    class TestViews(unittest.TestCase):
+        def setUp(self):
+            self.config = testing.setUp()
+            self.config.include('pyramid_mako')
+
+        def tearDown(self):
+            testing.tearDown()
+
+        def test_some_view(self):
+            from pyramid.testing import DummyRequest
+            request = DummyRequest()
+            response = some_view(request)
+            # templates/home.mako starts with the standard <html> tag for HTML5
+            self.assertTrue('<html' in response.body)
+
+
 Reporting Bugs / Development Versions
 =====================================
 
