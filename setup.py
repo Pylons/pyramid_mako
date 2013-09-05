@@ -37,7 +37,7 @@ testing_extras = tests_require + [
     'virtualenv', # for scaffolding tests
     ]
 requires = [
-    'pyramid>=1.5a1',
+    'pyramid',
     'Mako>=0.3.6' # strict undefined
 ]
 
@@ -71,8 +71,5 @@ setup(name='pyramid_mako',
           },
       tests_require=tests_require,
       test_suite="pyramid_mako.tests",
-      entry_points="""
-      [pyramid.internals.renderers]
-      mako=pyramid_mako:includeme
-      """,
+      entry_points="""""",
       )
