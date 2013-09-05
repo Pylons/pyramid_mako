@@ -1,3 +1,10 @@
+0.x (yyyy-mm-dd)
+================
+
+- Latest changes pulled from Pyramid
+- Latest tests pulled from Pyramid
+- All tests updated to refer to fixtures in pyramid_mako
+
 0.1 (2012-03-12)
 ================
 
