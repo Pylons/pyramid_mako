@@ -251,7 +251,7 @@ class MakoLookupTemplateRenderer(object):
 
         return result
 
-def includeme(config):
+def includeme(config): # pragma: no cover
     """Set up standard configurator registrations.  Use via:
 
     .. code-block:: python
