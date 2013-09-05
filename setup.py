@@ -20,14 +20,26 @@ here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.txt')).read()
 CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
+tests_require = [
+    'WebTest >= 1.3.1', # py3 compat
+    ]
+
+docs_extras = [
+    'Sphinx',
+    'docutils',
+    'repoze.sphinx.autointerface',
+    ]
+
+testing_extras = tests_require + [
+    'nose',
+    'nose-selecttests',
+    'coverage',
+    'virtualenv', # for scaffolding tests
+    ]
 requires = [
     'pyramid>=1.5a1',
     'Mako>=0.3.6' # strict undefined
 ]
-
-tests_require = [
-    'WebTest >= 1.3.1', # py3 compat
-    ]
 
 setup(name='pyramid_mako',
       version='0.1',
@@ -53,6 +65,10 @@ setup(name='pyramid_mako',
       include_package_data=True,
       zip_safe=False,
       install_requires=requires,
+      extras_require = {
+          'testing':testing_extras,
+          'docs':docs_extras,
+          },
       tests_require=tests_require,
       test_suite="pyramid_mako.tests",
       entry_points="""

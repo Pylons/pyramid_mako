@@ -1,6 +1,5 @@
 build
-env26/
-env32/
+env*/
 *.egg
 *.egg-info
 *.pyc
