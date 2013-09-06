@@ -6,5 +6,3 @@
 .. automodule:: pyramid_mako
 
 .. autofunction:: includeme
-
-.. autoclass:: MakoTemplateRenderer

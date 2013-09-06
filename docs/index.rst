@@ -26,9 +26,9 @@ are completely equivalent:
     config.include('pyramid_mako')
 
 #) Put a reference to ``pyramid_mako`` within the ``pyramid.includes`` value
-   in your ``ini`` file::
+   in your ``ini`` file configuration::
 
-   pyramid.includes = pyramid_mako
+    pyramid.includes = pyramid_mako
 
 Once activated either of these says, the following happens:
 
@@ -169,6 +169,13 @@ renderers are added to the config and can be used.::
             # templates/home.mako starts with the standard <html> tag for HTML5
             self.assertTrue('<html' in response.body)
 
+API Documentation
+=================
+
+.. toctree::
+   :maxdepth: 1
+
+   api
 
 Reporting Bugs / Development Versions
 =====================================
@@ -185,3 +192,8 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+.. toctree::
+   :hidden:
+
+   glossary
