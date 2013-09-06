@@ -69,13 +69,13 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'pyramid_mako'
-copyright = '2011, Agendaless Consulting <chrism@plope.com>'
+copyright = '2013, Agendaless Consulting'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '1.3'
+version = '0.1'
 # The full version, including alpha/beta/rc tags.
 release = version
 
