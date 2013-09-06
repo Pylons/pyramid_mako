@@ -25,11 +25,10 @@ are completely equivalent:
 
     config.include('pyramid_mako')
 
-#) If you're using ``pyramid_zcml`` instead of imperative configuration,
-   ensure that some ZCML file with an analogue of the following contents is
-   executed by your Pyramid application::
+#) Put a reference to ``pyramid_mako`` within the ``pyramid.includes`` value
+   in your ``ini`` file::
 
-    <include package="pyramid_mako"/>
+   pyramid.includes = pyramid_mako
 
 Once activated either of these says, the following happens:
 
@@ -128,7 +127,7 @@ file used to configure the Pyramid application (in the ``app`` section
 representing your Pyramid app) or they can be passed directly within the
 ``settings`` argument passed to a Pyramid Configurator.
 
-reload_templates
+pyramid.reload_templates
 
   ``true`` or ``false`` representing whether Mako templates should be
   reloaded when they change on disk.  Useful for development to be ``true``.
