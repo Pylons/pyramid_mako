@@ -42,7 +42,7 @@ To setup the mako search path either one of the following steps must be taken:
 
 #) Add ``mako.directories`` to your ``.ini`` settings file using the pyramid
    asset spec::
-  
+
      mako.directories = yourapp:templates
 
 #) Or Alternatively by using the ``add_mako_search_path`` directive
@@ -63,11 +63,11 @@ To setup the mako search path either one of the following steps must be taken:
     .. code-block:: text
 
         @view_config(renderer='templates/mytemplate.mako')
-  
+
     With the search path configured:
-      
-    .. code-block:: text 
-   
+
+    .. code-block:: text
+
        @view_config(renderer='mytemplate.mako')
 
 Usage
@@ -81,7 +81,7 @@ Template Lookups
 ----------------
 
 The default lookup mechanism for templates uses the :term:`Mako`
-search path. (specified with ``mako.directories`` or by using the 
+search path. (specified with ``mako.directories`` or by using the
 add_mako_search_path directive on the :term:`configurator` instance.)
 
 Rendering :term:`Mako` templates with a view like this is typically
@@ -92,7 +92,7 @@ live in the search path):
  :linenos:
 
  from pyramid.view import view_config
- 
+
  @view_config(renderer='mytemplate.mako')
  def myview(request):
      return {'foo':1, 'bar':2}
@@ -116,6 +116,28 @@ Asset Specifications
 Overriding templates in this style uses the standard
 `pyramid asset overriding technique
 <http://docs.pylonsproject.org/projects/pyramid/en/latest/narr/assets.html#overriding-assets>`_.
+
+Variables provided by Pyramid
+-----------------------------
+
+:term:`Pyramid` by default will provide a set of variables that are available within
+your templates, please see `System Values Used During Rendering
+<http://docs.pylonsproject.org/projects/pyramid/en/latest/narr/templates.html#renderer-system-values>`_
+for more information regarding those variables.
+
+
+.. note::
+
+   There is one variable that has to be renamed due to having an naming conflict
+   with an internal Mako variable.
+
+   ``context`` will be renamed to ``_context``
+
+   To output the name of the current context you would use the following:
+
+   .. code-block:: mako
+
+     <div>Context name: ${_context.__name__}</div>
 
 Settings
 ========
@@ -149,7 +171,7 @@ renderers are added to the config and can be used.::
     from pyramid import testing
     from pyramid.response import Response
     from pyramid.renderers import render
-    
+
     # The view we want to test
     def some_view(request):
         return Response(render('mypkg:templates/home.mako', {'var': 'testing'}))
