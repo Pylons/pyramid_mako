@@ -42,7 +42,7 @@ To setup the mako search path either one of the following steps must be taken:
 
 #) Add ``mako.directories`` to your ``.ini`` settings file using the pyramid
    asset spec::
-  
+
      mako.directories = yourapp:templates
 
 #) Or Alternatively by using the ``add_mako_search_path`` directive
@@ -63,11 +63,11 @@ To setup the mako search path either one of the following steps must be taken:
     .. code-block:: text
 
         @view_config(renderer='templates/mytemplate.mako')
-  
+
     With the search path configured:
-      
-    .. code-block:: text 
-   
+
+    .. code-block:: text
+
        @view_config(renderer='mytemplate.mako')
 
 Usage
@@ -81,7 +81,7 @@ Template Lookups
 ----------------
 
 The default lookup mechanism for templates uses the :term:`Mako`
-search path. (specified with ``mako.directories`` or by using the 
+search path. (specified with ``mako.directories`` or by using the
 add_mako_search_path directive on the :term:`configurator` instance.)
 
 Rendering :term:`Mako` templates with a view like this is typically
@@ -92,7 +92,7 @@ live in the search path):
  :linenos:
 
  from pyramid.view import view_config
- 
+
  @view_config(renderer='mytemplate.mako')
  def myview(request):
      return {'foo':1, 'bar':2}
@@ -171,7 +171,7 @@ renderers are added to the config and can be used.::
     from pyramid import testing
     from pyramid.response import Response
     from pyramid.renderers import render
-    
+
     # The view we want to test
     def some_view(request):
         return Response(render('mypkg:templates/home.mako', {'var': 'testing'}))
