@@ -117,6 +117,28 @@ Overriding templates in this style uses the standard
 `pyramid asset overriding technique
 <http://docs.pylonsproject.org/projects/pyramid/en/latest/narr/assets.html#overriding-assets>`_.
 
+Variables provided by Pyramid
+-----------------------------
+
+:term:`Pyramid` by default will provide a set of variables that are available within
+your templates, please see `System Values Used During Rendering
+<http://docs.pylonsproject.org/projects/pyramid/en/latest/narr/templates.html#renderer-system-values>`_
+for more information regarding those variables.
+
+
+.. note::
+
+   There is one variable that has to be renamed due to having an naming conflict
+   with an internal Mako variable.
+
+   ``context`` will be renamed to ``_context``
+
+   To output the name of the current context you would use the following:
+
+   .. code-block:: mako
+
+     <div>Context name: ${_context.__name__}</div>
+
 Settings
 ========
 
