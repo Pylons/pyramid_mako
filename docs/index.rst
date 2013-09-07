@@ -366,6 +366,23 @@ result of the callable will be used as the template source code.
 |                             |
 +-----------------------------+
 
+Reloading Templates
+-------------------
+
+When this value is true, templates are automatically reloaded whenever they are
+modified without restarting the application, so you can see changes to
+templates take effect immediately during development.  This flag is meaningful
+to most template rendering add-ons.
+
++---------------------------------+--------------------------------+
+| Environment Variable Name       | Config File Setting Name       |
++=================================+================================+
+| ``PYRAMID_RELOAD_TEMPLATES``    |  ``pyramid.reload_templates``  |
+|                                 |                                |
+|                                 |                                |
+|                                 |                                |
++---------------------------------+--------------------------------+
+
 Unit Testing
 ============
 
