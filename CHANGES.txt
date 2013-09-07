@@ -1,6 +1,7 @@
-0.x (yyyy-mm-dd)
+0.2 (2013-09-07)
 ================
 
+- Docs up-to-date
 - Latest changes pulled from Pyramid
 - Latest tests pulled from Pyramid
 - All tests updated to refer to fixtures in pyramid_mako
