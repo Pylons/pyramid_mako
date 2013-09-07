@@ -152,6 +152,43 @@ Looking up templates via an asset specification is a feature specific to
 Overriding templates in this style can use the standard Pyramid asset
 overriding technique described in :ref:`overriding_assets_section`.
 
+.. _reload_templates_section:
+
+Automatically Reloading Templates
+---------------------------------
+
+It's often convenient to see changes you make to a template file appear
+immediately without needing to restart the application process.  Pyramid allows
+you to configure your application development environment so that a change to a
+template will be automatically detected, and the template will be reloaded on
+the next rendering.
+
+.. warning:: Auto-template-reload behavior is not recommended for
+             production sites as it slows rendering slightly; it's
+             usually only desirable during development.
+
+In order to turn on automatic reloading of templates, you can use an
+environment variable, or a configuration file setting.
+
+To use an environment variable, start your application under a shell
+using the ``PYRAMID_RELOAD_TEMPLATES`` operating system environment
+variable set to ``1``, For example:
+
+.. code-block:: text
+
+  $ PYRAMID_RELOAD_TEMPLATES=1 bin/pserve myproject.ini
+
+To use a setting in the application ``.ini`` file for the same
+purpose, set the ``pyramid.reload_templates`` key to ``true`` within the
+application's configuration section, e.g.:
+
+.. code-block:: ini
+  :linenos:
+
+  [app:main]
+  use = egg:MyProject
+  pyramid.reload_templates = true
+
 A Sample Mako Template
 ----------------------
 
