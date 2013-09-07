@@ -152,8 +152,6 @@ Looking up templates via an asset specification is a feature specific to
 Overriding templates in this style can use the standard Pyramid asset
 overriding technique described in :ref:`overriding_assets_section`.
 
-.. _reload_templates_section:
-
 Automatically Reloading Templates
 ---------------------------------
 
