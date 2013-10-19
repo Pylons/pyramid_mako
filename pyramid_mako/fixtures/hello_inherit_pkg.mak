@@ -1,2 +1,2 @@
 Hello World!
-<%inherit file="pyramid.tests:fixtures/layout.mak"/>
+<%inherit file="pyramid_mako.tests:fixtures/layout.mak"/>
