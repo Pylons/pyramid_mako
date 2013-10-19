@@ -36,21 +36,12 @@ Once activated either of these says, the following happens:
 #) Files with the ``.mako`` or ``.mak`` extension are considered to be
    :term:`Mako` templates.
 
-#) The :func:`pyramid_mako.add_mako_search_path` directive is added to
-   the :term:`configurator` instance.
-
 To setup the mako search path either one of the following steps must be taken:
 
 #) Add ``mako.directories`` to your ``.ini`` settings file using the pyramid
    asset spec::
 
      mako.directories = yourapp:templates
-
-#) Or Alternatively by using the ``add_mako_search_path`` directive
-   attached to your application's :term:`configurator` instance also using
-   the pyramid asset spec::
-
-     config.add_mako_search_path("yourapp:templates")
 
 .. warning::
 
@@ -88,8 +79,7 @@ Template Lookups
 ----------------
 
 The default lookup mechanism for templates uses the :term:`Mako` search
-path. (specified with ``mako.directories`` or by using the add_mako_search_path
-directive on the :term:`configurator` instance.)
+path. (specified with ``mako.directories``)
 
 Rendering :term:`Mako` templates with a view like this is typically done as
 follows (where the ``templates`` directory is expected to live in the search
