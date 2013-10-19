@@ -19,7 +19,6 @@ from pyramid.compat import (
     reraise,
     )
 
-from pyramid.interfaces import ITemplateRenderer
 from pyramid.settings import asbool
 from pyramid.util import DottedNameResolver
 
@@ -170,7 +169,6 @@ class MakoRenderingException(Exception):
 
     __str__ = __repr__
 
-@implementer(ITemplateRenderer)
 class MakoLookupTemplateRenderer(object):
     """ Render a :term:`Mako` template using the template
     implied by the ``path`` argument.The ``path`` argument may be a
