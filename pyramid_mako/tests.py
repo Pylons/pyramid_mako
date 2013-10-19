@@ -367,16 +367,6 @@ class MakoLookupTemplateRendererTests(Base, maybe_unittest()):
         klass = self._getTargetClass()
         return klass(*arg, **kw)
 
-    def test_instance_implements_ITemplate(self):
-        from zope.interface.verify import verifyObject
-        from pyramid.interfaces import ITemplateRenderer
-        verifyObject(ITemplateRenderer, self._makeOne(None, None, None))
-
-    def test_class_implements_ITemplate(self):
-        from zope.interface.verify import verifyClass
-        from pyramid.interfaces import ITemplateRenderer
-        verifyClass(ITemplateRenderer, self._getTargetClass())
-
     def test_call(self):
         lookup = DummyLookup()
         instance = self._makeOne('path', None, lookup)
@@ -494,12 +484,12 @@ class TestIntegration(maybe_unittest()):
     def test_render_inheritance_pkg_spec(self):
         from pyramid.renderers import render
         result = render('hello_inherit_pkg.mak', {}).replace('\r','')
-        self.assertEqual(result, text_('Layout\nHello World!\n'))
+        self.assertEqual(result, text_('Layout\nHello World!\n\n'))
 
     def test_render_namespace(self):
         from pyramid.renderers import render
         result = render('hellocompo.mak', {}).replace('\r','')
-        self.assertEqual(result, text_('\nNamespace\nHello \nWorld!\n'))
+        self.assertEqual(result, text_('\nNamespace\nHello \nWorld!\n\n'))
 
     def test_render_to_response(self):
         from pyramid.renderers import render_to_response

@@ -1,3 +1,9 @@
+Unreleased
+==========
+
+- Remove dependency on ``pyramid.interfaces.ITemplateRenderer`` from
+  Pyramid 1.5.
+
 0.2 (2013-09-07)
 ================
 
