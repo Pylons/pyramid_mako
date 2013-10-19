@@ -484,12 +484,12 @@ class TestIntegration(maybe_unittest()):
     def test_render_inheritance_pkg_spec(self):
         from pyramid.renderers import render
         result = render('hello_inherit_pkg.mak', {}).replace('\r','')
-        self.assertEqual(result, text_('Layout\nHello World!\n'))
+        self.assertEqual(result, text_('Layout\nHello World!\n\n'))
 
     def test_render_namespace(self):
         from pyramid.renderers import render
         result = render('hellocompo.mak', {}).replace('\r','')
-        self.assertEqual(result, text_('\nNamespace\nHello \nWorld!\n'))
+        self.assertEqual(result, text_('\nNamespace\nHello \nWorld!\n\n'))
 
     def test_render_to_response(self):
         from pyramid.renderers import render_to_response
