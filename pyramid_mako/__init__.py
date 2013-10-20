@@ -24,10 +24,7 @@ from mako.lookup import TemplateLookup
 from mako.exceptions import TopLevelLookupException
 from mako.exceptions import text_error_template
 
-class IMakoSettings(Interface):
-    pass
-
-class IMakoLookup(Interface):
+class IMakoRendererFactory(Interface):
     pass
 
 class PkgResourceTemplateLookup(TemplateLookup):
@@ -83,18 +80,19 @@ class PkgResourceTemplateLookup(TemplateLookup):
                     "Can not locate template for uri %r" % uri)
         return TemplateLookup.get_template(self, uri)
 
-def renderer_factory(info):
-    defname = None
-    asset, ext = info.name.rsplit('.', 1)
-    if '#' in asset:
-        asset, defname = asset.rsplit('#', 1)
+class MakoRendererFactory(object):
+    def __init__(self, lookup):
+        self.lookup = lookup
 
-    path = '%s.%s' % (asset, ext)
+    def __call__(self, info):
+        defname = None
+        asset, ext = info.name.rsplit('.', 1)
+        if '#' in asset:
+            asset, defname = asset.rsplit('#', 1)
 
-    registry = info.registry
-    lookup = registry.queryUtility(IMakoLookup)
+        path = '%s.%s' % (asset, ext)
 
-    return MakoLookupTemplateRenderer(path, defname, lookup)
+        return MakoLookupTemplateRenderer(path, defname, self.lookup)
 
 class MakoRenderingException(Exception):
     def __init__(self, text):
@@ -160,26 +158,8 @@ class MakoLookupTemplateRenderer(object):
 
         return result
 
-def _schedule_setup(config, mako_settings):
-    registry = config.registry
-    if not getattr(mako_settings, 'dirty', False):
-        def setup():
-            lookup = registry.queryUtility(IMakoLookup)
-            if lookup:
-                registry.unregisterUtility(lookup, IMakoLookup)
-
-            lookup = PkgResourceTemplateLookup(**mako_settings)
-
-            registry.registerUtility(lookup, IMakoLookup)
-            mako_settings.dirty = False
-
-        mako_settings.dirty = True
-        config.action(None, setup)
-
-def _initialize_settings(config, settings_prefix='mako.'):
-    registry = config.registry
-    settings = registry.settings
-
+def make_renderer_factory(settings, settings_prefix, maybe_dotted):
+    """ Load a new renderer factory from settings."""
     def sget(name, default=None):
         return settings.get(settings_prefix + name, default)
 
@@ -201,7 +181,7 @@ def _initialize_settings(config, settings_prefix='mako.'):
     if module_directory is not None:
         module_directory = abspath_from_asset_spec(module_directory)
     if error_handler is not None:
-        error_handler = config.maybe_dotted(error_handler)
+        error_handler = maybe_dotted(error_handler)
     if default_filters is not None:
         if not is_nonstr_iter(default_filters):
             default_filters = list(filter(
@@ -210,9 +190,9 @@ def _initialize_settings(config, settings_prefix='mako.'):
         if not is_nonstr_iter(imports):
             imports = list(filter(None, imports.splitlines()))
     if preprocessor is not None:
-        preprocessor = config.maybe_dotted(preprocessor)
+        preprocessor = maybe_dotted(preprocessor)
 
-    mako_settings = dict(
+    lookup = PkgResourceTemplateLookup(
         directories=directories,
         module_directory=module_directory,
         input_encoding=input_encoding,
@@ -223,32 +203,47 @@ def _initialize_settings(config, settings_prefix='mako.'):
         strict_undefined=strict_undefined,
         preprocessor=preprocessor,
     )
-    registry.registerUtility(mako_settings, IMakoSettings)
-    _schedule_setup(config, mako_settings)
+    renderer_factory = MakoRendererFactory(lookup)
+    return renderer_factory
 
-def add_mako_search_path(config, path):
-    mako_settings = config.registry.queryUtility(IMakoSettings)
+def get_renderer_factory(config, settings_prefix):
+    """ Load a cached factory or create a new one."""
+    registry = config.registry
+    renderer_factory = registry.queryUtility(
+        IMakoRendererFactory, name=settings_prefix)
+    if renderer_factory is not None:
+        return renderer_factory
 
-    directories = mako_settings.setdefault('directories', [])
-    path = config.maybe_dotted(path)
-    directories.append(path)
+    renderer_factory = make_renderer_factory(
+        registry.settings, settings_prefix, config.maybe_dotted)
 
-    _schedule_setup(config, mako_settings)
+    registry.registerUtility(
+        renderer_factory, IMakoRendererFactory, name=settings_prefix)
+    return renderer_factory
+
+def add_mako_renderer(config, extension, settings_prefix='mako.'):
+    """ Register a Mako renderer for a template extension.
+
+    The renderer will load its configuration from a prefix in the Pyramid
+    settings dictionary. The default prefix is 'mako.'.
+    """
+    renderer_factory = get_renderer_factory(config, settings_prefix)
+    config.add_renderer(extension, renderer_factory)
 
 def includeme(config): # pragma: no cover
-    """Set up standard configurator registrations.  Use via:
+    """ Set up standard configurator registrations.  Use via:
 
     .. code-block:: python
 
        config = Configurator()
        config.include('pyramid_mako')
 
-    Once this function has been invoked, the ``.mako`` renderer is
-    available for use in Pyramid
+    Once this function has been invoked, the ``.mako`` and ``.mak`` renderers
+    are available for use in Pyramid. This can be overridden and more may be
+    added via the ``config.add_mako_renderer`` directive. See
+    :func:`~pyramid_mako.add_mako_renderer` documentation for more information.
     """
-    config.add_renderer('.mako', renderer_factory)
-    config.add_renderer('.mak', renderer_factory)
+    config.add_directive('add_mako_renderer', add_mako_renderer)
 
-    config.add_directive('add_mako_search_path', add_mako_search_path)
-
-    _initialize_settings(config)
+    config.add_mako_renderer('.mako')
+    config.add_mako_renderer('.mak')
