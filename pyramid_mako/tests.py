@@ -335,51 +335,14 @@ class Test_initialize_renderer(Base, maybe_unittest()):
         self.assertEqual(result.path, 'hello .world.mako')
         self.assertEqual(result.defname, 'comp')
 
-class MakoRendererFactoryHelperTests(Base, maybe_unittest()):
-    def _getTargetClass(self):
-        from pyramid_mako import MakoRendererFactoryHelper
-        return MakoRendererFactoryHelper
 
-    def _makeOne(self, *arg, **kw):
-        klass = self._getTargetClass()
-        return klass(*arg, **kw)
 
-    def _getLookup(self, name='mako.'):
-        from pyramid_mako import IMakoLookup
-        return self.config.registry.getUtility(IMakoLookup, name=name)
 
-    def test_no_settings_prefix(self):
-        settings = {'foo.directories':self.templates_dir}
+
         info = DummyRendererInfo({
-            'name':'helloworld.mak',
             'package':None,
             'registry':self.config.registry,
-            'settings':settings,
-            'type':'foo',
             })
-        helper = self._makeOne()
-        renderer = helper(info)
-        lookup = self._getLookup('foo.')
-        self.assertEqual(lookup.directories, [self.templates_dir])
-        self.assertEqual(lookup.filesystem_checks, False)
-        self.assertEqual(renderer.path, 'helloworld.mak')
-        self.assertEqual(renderer.lookup, lookup)
-
-    def test_custom_settings_prefix(self):
-        settings = {'bar.directories':self.templates_dir}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            'type':'foo',
-            })
-        helper = self._makeOne('bar.')
-        renderer = helper(info)
-        lookup = self._getLookup('bar.')
-        self.assertEqual(lookup.directories, [self.templates_dir])
-        self.assertEqual(lookup.filesystem_checks, False)
-        self.assertEqual(renderer.path, 'helloworld.mak')
         self.assertEqual(renderer.lookup, lookup)
 
 class MakoLookupTemplateRendererTests(Base, maybe_unittest()):
