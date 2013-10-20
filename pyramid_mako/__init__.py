@@ -79,8 +79,8 @@ class PkgResourceTemplateLookup(TemplateLookup):
                     "Can not locate template for uri %r" % uri)
         return TemplateLookup.get_template(self, uri)
 
-def MakoRendererFactory(lookup, renderer=MakoLookupTemplateRenderer):
-    def renderer_factory(self, info):
+def MakoRendererFactory(lookup):
+    def renderer_factory(info):
         defname = None
         asset, ext = info.name.rsplit('.', 1)
         if '#' in asset:
@@ -155,8 +155,8 @@ class MakoLookupTemplateRenderer(object):
 
         return result
 
-def make_renderer_factory(settings, settings_prefix, maybe_dotted):
-    """ Load a new renderer factory from settings."""
+def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
+    """ Parse options for use with Mako's TemplateLookup from settings."""
     def sget(name, default=None):
         return settings.get(settings_prefix + name, default)
 
@@ -174,7 +174,7 @@ def make_renderer_factory(settings, settings_prefix, maybe_dotted):
     preprocessor = sget('preprocessor', None)
     if not is_nonstr_iter(directories):
         directories = list(filter(None, directories.splitlines()))
-    directories = [ abspath_from_asset_spec(d) for d in directories ]
+    directories = [abspath_from_asset_spec(d) for d in directories]
     if module_directory is not None:
         module_directory = abspath_from_asset_spec(module_directory)
     if error_handler is not None:
@@ -189,7 +189,7 @@ def make_renderer_factory(settings, settings_prefix, maybe_dotted):
     if preprocessor is not None:
         preprocessor = maybe_dotted(preprocessor)
 
-    lookup = PkgResourceTemplateLookup(
+    return dict(
         directories=directories,
         module_directory=module_directory,
         input_encoding=input_encoding,
@@ -200,7 +200,6 @@ def make_renderer_factory(settings, settings_prefix, maybe_dotted):
         strict_undefined=strict_undefined,
         preprocessor=preprocessor,
     )
-    return MakoRendererFactory(lookup)
 
 def get_renderer_factory(config, settings_prefix):
     """ Load a cached factory or create a new one."""
@@ -210,8 +209,10 @@ def get_renderer_factory(config, settings_prefix):
     if renderer_factory is not None:
         return renderer_factory
 
-    renderer_factory = make_renderer_factory(
+    opts = parse_options_from_settings(
         registry.settings, settings_prefix, config.maybe_dotted)
+    lookup = PkgResourceTemplateLookup(**opts)
+    renderer_factory = MakoRendererFactory(lookup)
 
     registry.registerUtility(
         renderer_factory, IMakoRendererFactory, name=settings_prefix)

@@ -22,37 +22,92 @@ class Base(object):
     def tearDown(self):
         self.config.end()
 
-class Test_initialize_renderer(Base, unittest.TestCase):
-    def _initRenderer(self, settings, *args, **kw):
-        self.config.add_settings(settings)
-        from pyramid_mako import _initialize_renderer
-        return _initialize_renderer(self.config, *args, **kw)
+class TestMakoRendererFactory(Base, unittest.TestCase):
+    def _getTargetClass(self):
+        from pyramid_mako import MakoRendererFactory
+        return MakoRendererFactory
 
-    def _makeFactory(self, *args, **kw):
-        from pyramid_mako import renderer_factory_helper
-        return renderer_factory_helper(*args, **kw)
+    def _callFUT(self, info, lookup=None):
+        factory = self._getTargetClass()(lookup)
+        return factory(info)
 
-    def _callFUT(self, info, settings_prefix='mako.'):
-        renderer = self._makeFactory(settings_prefix=settings_prefix)
-        return renderer(info)
-
-    def _getLookup(self, name='mako.'):
-        from pyramid_mako import IMakoLookup
-        return self.config.registry.getUtility(IMakoLookup, name=name)
-
-    def test_hyphen_filenames(self):
-        from pyramid_mako import renderer_factory
-
-        info = DummyRendererInfo({
-            'name':'app:moon-and-world.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':{},
+    def _makeRendererInfo(self, spec, **kw):
+        opts = {
+            'name': spec,
+            'package': None,
+            'registry': self.config.registry,
+            'settings': self.config.get_settings(),
             'type': ''
-        })
+        }
+        opts.update(kw)
+        return DummyRendererInfo(opts)
 
-        result = renderer_factory(info)
-        self.assertEqual(result.path, 'app:moon-and-world.mak')
+    def test_asset_spec_filenames(self):
+        info = self._makeRendererInfo('app:moon-and-world.mak')
+        renderer = self._callFUT(info)
+        self.assertEqual(renderer.path, 'app:moon-and-world.mak')
+        self.assertTrue(renderer.defname is None)
+        self.assertTrue(renderer.lookup is None)
+
+    def test_asset_spec_filenames_with_def(self):
+        info = self._makeRendererInfo('app:moon-and-world#def.mak')
+        renderer = self._callFUT(info)
+        self.assertEqual(renderer.path, 'app:moon-and-world.mak')
+        self.assertEqual(renderer.defname, 'def')
+        self.assertTrue(renderer.lookup is None)
+
+    def test_asset_spec_subfolder_filenames(self):
+        info = self._makeRendererInfo(
+            'pyramid_mako.tests:fixtures/helloworld.mak')
+        renderer = self._callFUT(info)
+        self.assertEqual(renderer.path,
+                         'pyramid_mako.tests:fixtures/helloworld.mak')
+        self.assertTrue(renderer.defname is None)
+        self.assertTrue(renderer.lookup is None)
+
+    def test_asset_spec_subfolder_filenames_with_def(self):
+        info = self._makeRendererInfo(
+            'pyramid_mako.tests:fixtures/helloworld#def.mak')
+        renderer = self._callFUT(info)
+        self.assertEqual(renderer.path,
+                         'pyramid_mako.tests:fixtures/helloworld.mak')
+        self.assertEqual(renderer.defname, 'def')
+        self.assertTrue(renderer.lookup is None)
+
+    def test_relative_filenames(self):
+        info = self._makeRendererInfo('templates/moon-and-world.mak')
+        renderer = self._callFUT(info)
+        self.assertEqual(renderer.path, 'templates/moon-and-world.mak')
+        self.assertTrue(renderer.defname is None)
+        self.assertTrue(renderer.lookup is None)
+
+    def test_relative_filenames_with_def(self):
+        info = self._makeRendererInfo('templates/moon-and-world#def.mak')
+        renderer = self._callFUT(info)
+        self.assertEqual(renderer.path, 'templates/moon-and-world.mak')
+        self.assertEqual(renderer.defname, 'def')
+        self.assertTrue(renderer.lookup is None)
+
+    def test_multiple_dotted_filenames(self):
+        info = self._makeRendererInfo('moon.and.world.mak')
+        renderer = self._callFUT(info)
+        self.assertEqual(renderer.path, 'moon.and.world.mak')
+        self.assertTrue(renderer.defname is None)
+        self.assertTrue(renderer.lookup is None)
+
+    def test_multiple_dotted_filenames_with_def(self):
+        info = self._makeRendererInfo('moon.and.world#def.mak')
+        renderer = self._callFUT(info)
+        self.assertEqual(renderer.path, 'moon.and.world.mak')
+        self.assertEqual(renderer.defname, 'def')
+        self.assertTrue(renderer.lookup is None)
+
+class Test_parse_options_from_settings(Base, object):
+    def _callFUT(self, info, settings_prefix='mako.'):
+        from pyramid_mako import parse_options_from_settings
+        return parse_options_from_settings(
+            self.config.get_settings(), settings_prefix,
+            self.config.maybe_dotted)
 
     def test_no_directories(self):
         info = DummyRendererInfo({
@@ -463,11 +518,10 @@ class MakoLookupTemplateRendererTests(Base, unittest.TestCase):
 
 class TestIntegration(unittest.TestCase):
     def setUp(self):
-        import pyramid_mako
         self.config = testing.setUp()
         self.config.add_settings({'mako.directories':
                                   'pyramid_mako.tests:fixtures'})
-        self.config.include(pyramid_mako)
+        self.config.include('pyramid_mako')
 
     def tearDown(self):
         self.config.end()
