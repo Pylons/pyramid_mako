@@ -358,11 +358,26 @@ class Test_initialize_renderer(Base, maybe_unittest()):
         lookup = self._getLookup()
         self.assertEqual(lookup.filesystem_checks, True)
 
+    def test_multiple_registration_different_name(self):
         info = DummyRendererInfo({
+            'name':'pyramid_mako.tests:fixtures/helloworld.mak',
             'package':None,
             'registry':self.config.registry,
+            'settings':{},
             })
+        self._initRenderer({})
+        renderer = self._callFUT(info)
+        lookup = self._getLookup()
+        self.assertEqual(renderer.path,
+                         'pyramid_mako.tests:fixtures/helloworld.mak')
         self.assertEqual(renderer.lookup, lookup)
+
+        self._initRenderer({}, settings_prefix='whatever.')
+        renderer2 = self._callFUT(info, settings_prefix='whatever.')
+        lookup2 = self._getLookup('whatever.')
+        self.assertEqual(renderer2.path,
+                'pyramid_mako.tests:fixtures/helloworld.mak')
+        self.assertEqual(renderer2.lookup, lookup2);
 
 class MakoLookupTemplateRendererTests(Base, maybe_unittest()):
     def _getTargetClass(self):
