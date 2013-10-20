@@ -80,19 +80,6 @@ class PkgResourceTemplateLookup(TemplateLookup):
                     "Can not locate template for uri %r" % uri)
         return TemplateLookup.get_template(self, uri)
 
-def renderer_factory(info):
-    defname = None
-    asset, ext = info.name.rsplit('.', 1)
-    if '#' in asset:
-        asset, defname = asset.rsplit('#', 1)
-
-    path = '%s.%s' % (asset, ext)
-
-    registry = info.registry
-    lookup = registry.queryUtility(IMakoLookup)
-
-    return MakoLookupTemplateRenderer(path, defname, lookup)
-
 class MakoRenderingException(Exception):
     def __init__(self, text):
         self.text = text
@@ -196,9 +183,22 @@ def _initialize_settings(config, settings_prefix='mako.'):
     if preprocessor is not None:
         preprocessor = config.maybe_dotted(preprocessor)
 
+def renderer_factory_helper(settings_prefix='mako.'):
+    def renderer_factory(info):
+        defname = None
+        asset, ext = info.name.rsplit('.', 1)
+        if '#' in asset:
+            asset, defname = asset.rsplit('#', 1)
 
+        path = '%s.%s' % (asset, ext)
 
+        registry = info.registry
+        lookup = registry.queryUtility(IMakoLookup, name=settings_prefix)
 
+        return MakoLookupTemplateRenderer(path, defname, lookup)
+    return renderer_factory
+
+renderer_factory = renderer_factory_helper()
 
 def includeme(config): # pragma: no cover
     """Set up standard configurator registrations.  Use via:
