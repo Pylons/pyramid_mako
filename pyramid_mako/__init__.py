@@ -79,7 +79,7 @@ class PkgResourceTemplateLookup(TemplateLookup):
                     "Can not locate template for uri %r" % uri)
         return TemplateLookup.get_template(self, uri)
 
-def MakoRendererFactory(lookup):
+def MakoRendererFactory(lookup, renderer=MakoLookupTemplateRenderer):
     def renderer_factory(self, info):
         defname = None
         asset, ext = info.name.rsplit('.', 1)
@@ -200,8 +200,7 @@ def make_renderer_factory(settings, settings_prefix, maybe_dotted):
         strict_undefined=strict_undefined,
         preprocessor=preprocessor,
     )
-    renderer_factory = MakoRendererFactory(lookup)
-    return renderer_factory
+    return MakoRendererFactory(lookup)
 
 def get_renderer_factory(config, settings_prefix):
     """ Load a cached factory or create a new one."""

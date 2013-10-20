@@ -22,10 +22,32 @@ class Base(object):
     def tearDown(self):
         self.config.end()
 
-class Test_renderer_factory(Base, unittest.TestCase):
-    def _callFUT(self, info):
-        from pyramid_mako import renderer_factory
-        return renderer_factory(info)
+def maybe_unittest():
+    # The latest release of MarkupSafe (0.17) which is used by Mako is
+    # incompatible with Python 3.2, so we skip these tests if we cannot
+    # import a Mako module which ends up importing MarkupSafe.  Note that
+    # this version of MarkupSafe *is* compatible with Python 2.6, 2.7, and 3.3,
+    # so these tests should not be skipped on those platforms.
+    try:
+        import mako.lookup
+    except (ImportError, SyntaxError, AttributeError): # pragma: no cover
+        return object
+    else:
+        return unittest.TestCase
+
+class Test_initialize_renderer(Base, maybe_unittest()):
+    def _initRenderer(self, settings, *args, **kw):
+        self.config.add_settings(settings)
+        from pyramid_mako import _initialize_renderer
+        return _initialize_renderer(self.config, *args, **kw)
+
+    def _makeFactory(self, *args, **kw):
+        from pyramid_mako import renderer_factory_helper
+        return renderer_factory_helper(*args, **kw)
+
+    def _callFUT(self, info, settings_prefix='mako.'):
+        renderer = self._makeFactory(settings_prefix=settings_prefix)
+        return renderer(info)
 
     def _getLookup(self, name='mako.'):
         from pyramid_mako import IMakoLookup
@@ -52,6 +74,7 @@ class Test_renderer_factory(Base, unittest.TestCase):
             'registry':self.config.registry,
             'settings':{},
             })
+        self._initRenderer({})
         renderer = self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.directories, [])
@@ -68,6 +91,7 @@ class Test_renderer_factory(Base, unittest.TestCase):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         renderer = self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.directories, [self.templates_dir])
@@ -84,6 +108,7 @@ class Test_renderer_factory(Base, unittest.TestCase):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.directories, [self.templates_dir]*2)
@@ -98,6 +123,7 @@ class Test_renderer_factory(Base, unittest.TestCase):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         module_path = os.path.dirname(
@@ -117,6 +143,7 @@ class Test_renderer_factory(Base, unittest.TestCase):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         fixtures = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -133,6 +160,7 @@ class Test_renderer_factory(Base, unittest.TestCase):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.module_directory, fixtures)
@@ -146,6 +174,7 @@ class Test_renderer_factory(Base, unittest.TestCase):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['input_encoding'], 'utf-16')
@@ -160,6 +189,7 @@ class Test_renderer_factory(Base, unittest.TestCase):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['error_handler'], pyramid_mako.tests)
@@ -174,6 +204,7 @@ class Test_renderer_factory(Base, unittest.TestCase):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['preprocessor'], pyramid_mako.tests)
@@ -187,6 +218,7 @@ class Test_renderer_factory(Base, unittest.TestCase):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['default_filters'], ['h', 'g'])
@@ -200,6 +232,7 @@ class Test_renderer_factory(Base, unittest.TestCase):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['default_filters'], ['h', 'g'])
@@ -213,6 +246,7 @@ class Test_renderer_factory(Base, unittest.TestCase):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['imports'], ['one', 'two'])
@@ -226,6 +260,7 @@ class Test_renderer_factory(Base, unittest.TestCase):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['imports'], ['one', 'two'])
@@ -239,6 +274,7 @@ class Test_renderer_factory(Base, unittest.TestCase):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['strict_undefined'], True)
@@ -252,6 +288,7 @@ class Test_renderer_factory(Base, unittest.TestCase):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['strict_undefined'], False)
@@ -298,54 +335,51 @@ class Test_renderer_factory(Base, unittest.TestCase):
         self.assertEqual(result.path, 'hello .world.mako')
         self.assertEqual(result.defname, 'comp')
 
-class MakoRendererFactoryHelperTests(Base, unittest.TestCase):
-    def _getTargetClass(self):
-        from pyramid_mako import MakoRendererFactoryHelper
-        return MakoRendererFactoryHelper
+    def test_multiple_registration(self):
+        self._initRenderer({})
 
-    def _makeOne(self, *arg, **kw):
-        klass = self._getTargetClass()
-        return klass(*arg, **kw)
+        def create_new():
+            return self._initRenderer({})
+        self.assertRaises(RuntimeError, create_new)
 
-    def _getLookup(self, name='mako.'):
-        from pyramid_mako import IMakoLookup
-        return self.config.registry.getUtility(IMakoLookup, name=name)
+    def test_reload_templates_namespace(self):
+        settings = {'mako.directories': self.templates_dir,
+                    'pyramid.reload_templates': True}
 
-    def test_no_settings_prefix(self):
-        settings = {'foo.directories':self.templates_dir}
+        self._initRenderer(settings)
+        lookup = self._getLookup()
+        self.assertEqual(lookup.filesystem_checks, True)
+
+    def test_reload_templates_namespace_text(self):
+        settings = {'mako.directories': self.templates_dir,
+                    'pyramid.reload_templates': 'True'}
+
+        self._initRenderer(settings)
+        lookup = self._getLookup()
+        self.assertEqual(lookup.filesystem_checks, True)
+
+    def test_multiple_registration_different_name(self):
         info = DummyRendererInfo({
-            'name':'helloworld.mak',
+            'name':'pyramid_mako.tests:fixtures/helloworld.mak',
             'package':None,
             'registry':self.config.registry,
-            'settings':settings,
-            'type':'foo',
+            'settings':{},
             })
-        helper = self._makeOne()
-        renderer = helper(info)
-        lookup = self._getLookup('foo.')
-        self.assertEqual(lookup.directories, [self.templates_dir])
-        self.assertEqual(lookup.filesystem_checks, False)
-        self.assertEqual(renderer.path, 'helloworld.mak')
+        self._initRenderer({})
+        renderer = self._callFUT(info)
+        lookup = self._getLookup()
+        self.assertEqual(renderer.path,
+                         'pyramid_mako.tests:fixtures/helloworld.mak')
         self.assertEqual(renderer.lookup, lookup)
 
-    def test_custom_settings_prefix(self):
-        settings = {'bar.directories':self.templates_dir}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            'type':'foo',
-            })
-        helper = self._makeOne('bar.')
-        renderer = helper(info)
-        lookup = self._getLookup('bar.')
-        self.assertEqual(lookup.directories, [self.templates_dir])
-        self.assertEqual(lookup.filesystem_checks, False)
-        self.assertEqual(renderer.path, 'helloworld.mak')
-        self.assertEqual(renderer.lookup, lookup)
+        self._initRenderer({}, settings_prefix='whatever.')
+        renderer2 = self._callFUT(info, settings_prefix='whatever.')
+        lookup2 = self._getLookup('whatever.')
+        self.assertEqual(renderer2.path,
+                'pyramid_mako.tests:fixtures/helloworld.mak')
+        self.assertEqual(renderer2.lookup, lookup2);
 
-class MakoLookupTemplateRendererTests(Base, unittest.TestCase):
+class MakoLookupTemplateRendererTests(Base, maybe_unittest()):
     def _getTargetClass(self):
         from pyramid_mako import MakoLookupTemplateRenderer
         return MakoLookupTemplateRenderer
@@ -440,13 +474,13 @@ class MakoLookupTemplateRendererTests(Base, unittest.TestCase):
         self.assertTrue(isinstance(result, text_type))
         self.assertEqual(result, text_('result'))
 
-class TestIntegration(unittest.TestCase):
+class TestIntegration(maybe_unittest()):
     def setUp(self):
         import pyramid_mako
         self.config = testing.setUp()
         self.config.add_settings({'mako.directories':
                                   'pyramid_mako.tests:fixtures'})
-        self.config.include('pyramid_mako')
+        self.config.include(pyramid_mako)
 
     def tearDown(self):
         self.config.end()
@@ -458,7 +492,6 @@ class TestIntegration(unittest.TestCase):
 
     def test_render_from_fs(self):
         from pyramid.renderers import render
-        self.config.add_settings({'reload_templates': True})
         result = render('helloworld.mak', {'a':1}).replace('\r','')
         self.assertEqual(result, text_('\nHello föö\n', 'utf-8'))
 
@@ -514,7 +547,16 @@ class TestIntegration(unittest.TestCase):
                         {'name':'<b>fred</b>'}).replace('\r','')
         self.assertEqual(result, text_('Hello, &lt;b&gt;fred&lt;/b&gt;!\n'))
 
-class TestPkgResourceTemplateLookup(unittest.TestCase):
+    def test_add_mako_renderer(self):
+        from pyramid.renderers import render
+        self.config.add_settings({'foo.directories':
+                                  'pyramid_mako.tests:fixtures'})
+        self.config.add_mako_renderer('.foo', settings_prefix='foo.')
+        result = render('nonminimal.foo',
+                        {'name':'<b>fred</b>'}).replace('\r','')
+        self.assertEqual(result, text_('Hello, &lt;b&gt;fred&lt;/b&gt;!\n'))
+
+class TestPkgResourceTemplateLookup(maybe_unittest()):
     def _makeOne(self, **kw):
         from pyramid_mako import PkgResourceTemplateLookup
         return PkgResourceTemplateLookup(**kw)
