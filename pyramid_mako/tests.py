@@ -547,6 +547,15 @@ class TestIntegration(maybe_unittest()):
                         {'name':'<b>fred</b>'}).replace('\r','')
         self.assertEqual(result, text_('Hello, &lt;b&gt;fred&lt;/b&gt;!\n'))
 
+    def test_add_mako_renderer(self):
+        from pyramid.renderers import render
+        self.config.add_settings({'foo.directories':
+                                  'pyramid_mako.tests:fixtures'})
+        self.config.add_mako_renderer('.foo', settings_prefix='foo.')
+        result = render('nonminimal.foo',
+                        {'name':'<b>fred</b>'}).replace('\r','')
+        self.assertEqual(result, text_('Hello, &lt;b&gt;fred&lt;/b&gt;!\n'))
+
 class TestPkgResourceTemplateLookup(maybe_unittest()):
     def _makeOne(self, **kw):
         from pyramid_mako import PkgResourceTemplateLookup
