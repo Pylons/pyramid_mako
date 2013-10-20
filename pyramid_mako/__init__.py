@@ -5,7 +5,6 @@ import threading
 import warnings
 
 from zope.interface import (
-    implementer,
     Interface,
     )
 
@@ -20,11 +19,13 @@ from pyramid.compat import (
     )
 
 from pyramid.settings import asbool
-from pyramid.util import DottedNameResolver
 
 from mako.lookup import TemplateLookup
 from mako.exceptions import TopLevelLookupException
 from mako.exceptions import text_error_template
+
+class IMakoSettings(Interface):
+    pass
 
 class IMakoLookup(Interface):
     pass
@@ -82,83 +83,18 @@ class PkgResourceTemplateLookup(TemplateLookup):
                     "Can not locate template for uri %r" % uri)
         return TemplateLookup.get_template(self, uri)
 
-registry_lock = threading.Lock()
+def renderer_factory(info):
+    defname = None
+    asset, ext = info.name.rsplit('.', 1)
+    if '#' in asset:
+        asset, defname = asset.rsplit('#', 1)
 
-class MakoRendererFactoryHelper(object):
-    def __init__(self, settings_prefix=None):
-        self.settings_prefix = settings_prefix
+    path = '%s.%s' % (asset, ext)
 
-    def __call__(self, info):
-        defname = None
-        asset, ext = info.name.rsplit('.', 1)
-        if '#' in asset:
-            asset, defname = asset.rsplit('#', 1)
+    registry = info.registry
+    lookup = registry.queryUtility(IMakoLookup)
 
-        path = '%s.%s' % (asset, ext)
-        registry = info.registry
-        settings = info.settings
-        settings_prefix = self.settings_prefix
-
-        if settings_prefix is None:
-            settings_prefix = info.type +'.'
-
-        lookup = registry.queryUtility(IMakoLookup, name=settings_prefix)
-
-        def sget(name, default=None):
-            return settings.get(settings_prefix + name, default)
-
-        if lookup is None:
-            reload_templates = settings.get('pyramid.reload_templates', None)
-            if reload_templates is None:
-                reload_templates = settings.get('reload_templates', False)
-            reload_templates = asbool(reload_templates)
-            directories = sget('directories', [])
-            module_directory = sget('module_directory', None)
-            input_encoding = sget('input_encoding', 'utf-8')
-            error_handler = sget('error_handler', None)
-            default_filters = sget('default_filters', 'h')
-            imports = sget('imports', None)
-            strict_undefined = asbool(sget('strict_undefined', False))
-            preprocessor = sget('preprocessor', None)
-            if not is_nonstr_iter(directories):
-                directories = list(filter(None, directories.splitlines()))
-            directories = [ abspath_from_asset_spec(d) for d in directories ]
-            if module_directory is not None:
-                module_directory = abspath_from_asset_spec(module_directory)
-            if error_handler is not None:
-                dotted = DottedNameResolver(info.package)
-                error_handler = dotted.maybe_resolve(error_handler)
-            if default_filters is not None:
-                if not is_nonstr_iter(default_filters):
-                    default_filters = list(filter(
-                        None, default_filters.splitlines()))
-            if imports is not None:
-                if not is_nonstr_iter(imports):
-                    imports = list(filter(None, imports.splitlines()))
-            if preprocessor is not None:
-                dotted = DottedNameResolver(info.package)
-                preprocessor = dotted.maybe_resolve(preprocessor)
-
-
-            lookup = PkgResourceTemplateLookup(
-                directories=directories,
-                module_directory=module_directory,
-                input_encoding=input_encoding,
-                error_handler=error_handler,
-                default_filters=default_filters,
-                imports=imports,
-                filesystem_checks=reload_templates,
-                strict_undefined=strict_undefined,
-                preprocessor=preprocessor
-                )
-
-            with registry_lock:
-                registry.registerUtility(lookup, IMakoLookup,
-                                         name=settings_prefix)
-
-        return MakoLookupTemplateRenderer(path, defname, lookup)
-
-renderer_factory = MakoRendererFactoryHelper('mako.')
+    return MakoLookupTemplateRenderer(path, defname, lookup)
 
 class MakoRenderingException(Exception):
     def __init__(self, text):
@@ -224,6 +160,81 @@ class MakoLookupTemplateRenderer(object):
 
         return result
 
+def _schedule_setup(config, mako_settings):
+    registry = config.registry
+    if not getattr(mako_settings, 'dirty', False):
+        def setup():
+            lookup = registry.queryUtility(IMakoLookup)
+            if lookup:
+                registry.unregisterUtility(lookup, IMakoLookup)
+
+            lookup = PkgResourceTemplateLookup(**mako_settings)
+
+            registry.registerUtility(lookup, IMakoLookup)
+            mako_settings.dirty = False
+
+        mako_settings.dirty = True
+        config.action(None, setup)
+
+def _initialize_settings(config, settings_prefix='mako.'):
+    registry = config.registry
+    settings = registry.settings
+
+    def sget(name, default=None):
+        return settings.get(settings_prefix + name, default)
+
+    reload_templates = settings.get('pyramid.reload_templates', None)
+    if reload_templates is None:
+        reload_templates = settings.get('reload_templates', False)
+    reload_templates = asbool(reload_templates)
+    directories = sget('directories', [])
+    module_directory = sget('module_directory', None)
+    input_encoding = sget('input_encoding', 'utf-8')
+    error_handler = sget('error_handler', None)
+    default_filters = sget('default_filters', 'h')
+    imports = sget('imports', None)
+    strict_undefined = asbool(sget('strict_undefined', False))
+    preprocessor = sget('preprocessor', None)
+    if not is_nonstr_iter(directories):
+        directories = list(filter(None, directories.splitlines()))
+    directories = [ abspath_from_asset_spec(d) for d in directories ]
+    if module_directory is not None:
+        module_directory = abspath_from_asset_spec(module_directory)
+    if error_handler is not None:
+        error_handler = config.maybe_dotted(error_handler)
+    if default_filters is not None:
+        if not is_nonstr_iter(default_filters):
+            default_filters = list(filter(
+                None, default_filters.splitlines()))
+    if imports is not None:
+        if not is_nonstr_iter(imports):
+            imports = list(filter(None, imports.splitlines()))
+    if preprocessor is not None:
+        preprocessor = config.maybe_dotted(preprocessor)
+
+    mako_settings = dict(
+        directories=directories,
+        module_directory=module_directory,
+        input_encoding=input_encoding,
+        error_handler=error_handler,
+        default_filters=default_filters,
+        imports=imports,
+        filesystem_checks=reload_templates,
+        strict_undefined=strict_undefined,
+        preprocessor=preprocessor,
+    )
+    registry.registerUtility(mako_settings, IMakoSettings)
+    _schedule_setup(config, mako_settings)
+
+def add_mako_search_path(config, path):
+    mako_settings = config.registry.queryUtility(IMakoSettings)
+
+    directories = mako_settings.setdefault('directories', [])
+    path = config.maybe_dotted(path)
+    directories.append(path)
+
+    _schedule_setup(config, mako_settings)
+
 def includeme(config): # pragma: no cover
     """Set up standard configurator registrations.  Use via:
 
@@ -237,3 +248,7 @@ def includeme(config): # pragma: no cover
     """
     config.add_renderer('.mako', renderer_factory)
     config.add_renderer('.mak', renderer_factory)
+
+    config.add_directive('add_mako_search_path', add_mako_search_path)
+
+    _initialize_settings(config)
