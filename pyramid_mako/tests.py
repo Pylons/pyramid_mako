@@ -335,7 +335,12 @@ class Test_initialize_renderer(Base, maybe_unittest()):
         self.assertEqual(result.path, 'hello .world.mako')
         self.assertEqual(result.defname, 'comp')
 
+    def test_multiple_registration(self):
+        self._initRenderer({})
 
+        def create_new():
+            return self._initRenderer({})
+        self.assertRaises(RuntimeError, create_new)
 
 
 
