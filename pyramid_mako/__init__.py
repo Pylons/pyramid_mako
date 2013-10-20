@@ -144,20 +144,20 @@ class MakoLookupTemplateRenderer(object):
 
         return result
 
-    registry = config.registry
-
-
-def _initialize_settings(config, settings_prefix='mako.'):
+def _initialize_renderer(config, settings_prefix='mako.'):
     registry = config.registry
     settings = registry.settings
+
+    lookup = registry.queryUtility(IMakoLookup, name=settings_prefix)
+
+    if lookup:
+        raise RuntimeError('Mako renderer with settings_prefix "{0}" already exists.'.format(settings_prefix))
+        # Or should this return instead, since a user may want to register two extensions with the same mako renderer?
 
     def sget(name, default=None):
         return settings.get(settings_prefix + name, default)
 
-    reload_templates = settings.get('pyramid.reload_templates', None)
-    if reload_templates is None:
-        reload_templates = settings.get('reload_templates', False)
-    reload_templates = asbool(reload_templates)
+    reload_templates = asbool(settings.get('pyramid.reload_templates', False))
     directories = sget('directories', [])
     module_directory = sget('module_directory', None)
     input_encoding = sget('input_encoding', 'utf-8')
@@ -182,6 +182,19 @@ def _initialize_settings(config, settings_prefix='mako.'):
             imports = list(filter(None, imports.splitlines()))
     if preprocessor is not None:
         preprocessor = config.maybe_dotted(preprocessor)
+
+    lookup = PkgResourceTemplateLookup(
+            directories=directories,
+            module_directory=module_directory,
+            input_encoding=input_encoding,
+            error_handler=error_handler,
+            default_filters=default_filters,
+            imports=imports,
+            filesystem_checks=reload_templates,
+            strict_undefined=strict_undefined,
+            preprocessor=preprocessor,
+        )
+    registry.registerUtility(lookup, IMakoLookup, name=settings_prefix)
 
 def renderer_factory_helper(settings_prefix='mako.'):
     def renderer_factory(info):
@@ -211,8 +224,9 @@ def includeme(config): # pragma: no cover
     Once this function has been invoked, the ``.mako`` renderer is
     available for use in Pyramid
     """
+
+    _initialize_renderer(config)
+
     config.add_renderer('.mako', renderer_factory)
     config.add_renderer('.mak', renderer_factory)
 
-
-    _initialize_settings(config)
