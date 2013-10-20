@@ -79,11 +79,8 @@ class PkgResourceTemplateLookup(TemplateLookup):
                     "Can not locate template for uri %r" % uri)
         return TemplateLookup.get_template(self, uri)
 
-class MakoRendererFactory(object):
-    def __init__(self, lookup):
-        self.lookup = lookup
-
-    def __call__(self, info):
+def MakoRendererFactory(lookup):
+    def renderer_factory(self, info):
         defname = None
         asset, ext = info.name.rsplit('.', 1)
         if '#' in asset:
@@ -91,7 +88,8 @@ class MakoRendererFactory(object):
 
         path = '%s.%s' % (asset, ext)
 
-        return MakoLookupTemplateRenderer(path, defname, self.lookup)
+        return MakoLookupTemplateRenderer(path, defname, lookup)
+    return renderer_factory
 
 class MakoRenderingException(Exception):
     def __init__(self, text):
