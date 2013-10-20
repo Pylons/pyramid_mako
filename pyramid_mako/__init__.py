@@ -224,13 +224,20 @@ def get_renderer_factory(config, settings_prefix):
 def add_mako_renderer(config, extension, settings_prefix='mako.'):
     """ Register a Mako renderer for a template extension.
 
+    This function is available on the Pyramid configurator after
+    including the package:
+
+    .. code-block:: python
+
+       config.add_mako_renderer('.html', settings_prefix='mako.')
+
     The renderer will load its configuration from a prefix in the Pyramid
     settings dictionary. The default prefix is 'mako.'.
     """
     renderer_factory = get_renderer_factory(config, settings_prefix)
     config.add_renderer(extension, renderer_factory)
 
-def includeme(config): # pragma: no cover
+def includeme(config):
     """ Set up standard configurator registrations.  Use via:
 
     .. code-block:: python
