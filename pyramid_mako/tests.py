@@ -342,7 +342,21 @@ class Test_initialize_renderer(Base, maybe_unittest()):
             return self._initRenderer({})
         self.assertRaises(RuntimeError, create_new)
 
+    def test_reload_templates_namespace(self):
+        settings = {'mako.directories': self.templates_dir,
+                    'pyramid.reload_templates': True}
 
+        self._initRenderer(settings)
+        lookup = self._getLookup()
+        self.assertEqual(lookup.filesystem_checks, True)
+
+    def test_reload_templates_namespace_text(self):
+        settings = {'mako.directories': self.templates_dir,
+                    'pyramid.reload_templates': 'True'}
+
+        self._initRenderer(settings)
+        lookup = self._getLookup()
+        self.assertEqual(lookup.filesystem_checks, True)
 
         info = DummyRendererInfo({
             'package':None,
