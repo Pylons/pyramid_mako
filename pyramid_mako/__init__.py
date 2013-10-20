@@ -24,9 +24,6 @@ from mako.lookup import TemplateLookup
 from mako.exceptions import TopLevelLookupException
 from mako.exceptions import text_error_template
 
-class IMakoSettings(Interface):
-    pass
-
 class IMakoLookup(Interface):
     pass
 
@@ -160,21 +157,8 @@ class MakoLookupTemplateRenderer(object):
 
         return result
 
-def _schedule_setup(config, mako_settings):
     registry = config.registry
-    if not getattr(mako_settings, 'dirty', False):
-        def setup():
-            lookup = registry.queryUtility(IMakoLookup)
-            if lookup:
-                registry.unregisterUtility(lookup, IMakoLookup)
 
-            lookup = PkgResourceTemplateLookup(**mako_settings)
-
-            registry.registerUtility(lookup, IMakoLookup)
-            mako_settings.dirty = False
-
-        mako_settings.dirty = True
-        config.action(None, setup)
 
 def _initialize_settings(config, settings_prefix='mako.'):
     registry = config.registry
@@ -212,28 +196,9 @@ def _initialize_settings(config, settings_prefix='mako.'):
     if preprocessor is not None:
         preprocessor = config.maybe_dotted(preprocessor)
 
-    mako_settings = dict(
-        directories=directories,
-        module_directory=module_directory,
-        input_encoding=input_encoding,
-        error_handler=error_handler,
-        default_filters=default_filters,
-        imports=imports,
-        filesystem_checks=reload_templates,
-        strict_undefined=strict_undefined,
-        preprocessor=preprocessor,
-    )
-    registry.registerUtility(mako_settings, IMakoSettings)
-    _schedule_setup(config, mako_settings)
 
-def add_mako_search_path(config, path):
-    mako_settings = config.registry.queryUtility(IMakoSettings)
 
-    directories = mako_settings.setdefault('directories', [])
-    path = config.maybe_dotted(path)
-    directories.append(path)
 
-    _schedule_setup(config, mako_settings)
 
 def includeme(config): # pragma: no cover
     """Set up standard configurator registrations.  Use via:
@@ -249,6 +214,5 @@ def includeme(config): # pragma: no cover
     config.add_renderer('.mako', renderer_factory)
     config.add_renderer('.mak', renderer_factory)
 
-    config.add_directive('add_mako_search_path', add_mako_search_path)
 
     _initialize_settings(config)
