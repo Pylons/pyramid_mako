@@ -35,10 +35,19 @@ def maybe_unittest():
     else:
         return unittest.TestCase
 
-class Test_renderer_factory(Base, maybe_unittest()):
-    def _callFUT(self, info):
-        from pyramid_mako import renderer_factory
-        return renderer_factory(info)
+class Test_initialize_renderer(Base, maybe_unittest()):
+    def _initRenderer(self, settings, *args, **kw):
+        self.config.add_settings(settings)
+        from pyramid_mako import _initialize_renderer
+        return _initialize_renderer(self.config, *args, **kw)
+
+    def _makeFactory(self, *args, **kw):
+        from pyramid_mako import renderer_factory_helper
+        return renderer_factory_helper(*args, **kw)
+
+    def _callFUT(self, info, settings_prefix='mako.'):
+        renderer = self._makeFactory(settings_prefix=settings_prefix)
+        return renderer(info)
 
     def _getLookup(self, name='mako.'):
         from pyramid_mako import IMakoLookup
@@ -65,6 +74,7 @@ class Test_renderer_factory(Base, maybe_unittest()):
             'registry':self.config.registry,
             'settings':{},
             })
+        self._initRenderer({})
         renderer = self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.directories, [])
@@ -81,6 +91,7 @@ class Test_renderer_factory(Base, maybe_unittest()):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         renderer = self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.directories, [self.templates_dir])
@@ -97,6 +108,7 @@ class Test_renderer_factory(Base, maybe_unittest()):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.directories, [self.templates_dir]*2)
@@ -111,6 +123,7 @@ class Test_renderer_factory(Base, maybe_unittest()):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         module_path = os.path.dirname(
@@ -130,6 +143,7 @@ class Test_renderer_factory(Base, maybe_unittest()):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         fixtures = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -146,6 +160,7 @@ class Test_renderer_factory(Base, maybe_unittest()):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.module_directory, fixtures)
@@ -159,6 +174,7 @@ class Test_renderer_factory(Base, maybe_unittest()):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['input_encoding'], 'utf-16')
@@ -173,6 +189,7 @@ class Test_renderer_factory(Base, maybe_unittest()):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['error_handler'], pyramid_mako.tests)
@@ -187,6 +204,7 @@ class Test_renderer_factory(Base, maybe_unittest()):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['preprocessor'], pyramid_mako.tests)
@@ -200,6 +218,7 @@ class Test_renderer_factory(Base, maybe_unittest()):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['default_filters'], ['h', 'g'])
@@ -213,6 +232,7 @@ class Test_renderer_factory(Base, maybe_unittest()):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['default_filters'], ['h', 'g'])
@@ -226,6 +246,7 @@ class Test_renderer_factory(Base, maybe_unittest()):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['imports'], ['one', 'two'])
@@ -239,6 +260,7 @@ class Test_renderer_factory(Base, maybe_unittest()):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['imports'], ['one', 'two'])
@@ -252,6 +274,7 @@ class Test_renderer_factory(Base, maybe_unittest()):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['strict_undefined'], True)
@@ -265,6 +288,7 @@ class Test_renderer_factory(Base, maybe_unittest()):
             'registry':self.config.registry,
             'settings':settings,
             })
+        self._initRenderer(settings)
         self._callFUT(info)
         lookup = self._getLookup()
         self.assertEqual(lookup.template_args['strict_undefined'], False)
