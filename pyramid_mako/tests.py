@@ -480,8 +480,7 @@ class TestIntegration(maybe_unittest()):
         self.config = testing.setUp()
         self.config.add_settings({'mako.directories':
                                   'pyramid_mako.tests:fixtures'})
-        self.config.add_renderer('.mak',
-                                 pyramid_mako.renderer_factory)
+        self.config.include(pyramid_mako)
 
     def tearDown(self):
         self.config.end()
