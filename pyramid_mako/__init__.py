@@ -213,6 +213,10 @@ def renderer_factory_helper(settings_prefix='mako.'):
 
 renderer_factory = renderer_factory_helper()
 
+def add_mako_renderer(config, name, settings_prefix):
+    _initialize_renderer(config, settings_prefix=settings_prefix)
+    config.add_renderer(name, renderer_factory_helper(settings_prefix=settings_prefix))
+
 def includeme(config): # pragma: no cover
     """Set up standard configurator registrations.  Use via:
 
@@ -230,3 +234,4 @@ def includeme(config): # pragma: no cover
     config.add_renderer('.mako', renderer_factory)
     config.add_renderer('.mak', renderer_factory)
 
+    config.add_directive('add_mako_renderer', add_mako_renderer)
