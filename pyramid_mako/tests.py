@@ -492,7 +492,6 @@ class TestIntegration(maybe_unittest()):
 
     def test_render_from_fs(self):
         from pyramid.renderers import render
-        self.config.add_settings({'reload_templates': True})
         result = render('helloworld.mak', {'a':1}).replace('\r','')
         self.assertEqual(result, text_('\nHello föö\n', 'utf-8'))
 
