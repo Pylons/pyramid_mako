@@ -80,6 +80,21 @@ class PkgResourceTemplateLookup(TemplateLookup):
                     "Can not locate template for uri %r" % uri)
         return TemplateLookup.get_template(self, uri)
 
+class MakoRendererFactoryHelper(object):
+    def __init__(self, settings_prefix):
+        self.settings_prefix = settings_prefix
+
+    def __call_(self, info):
+        registry = info.registry
+
+        renderer_factory = registry.queryUtility(
+            IMakoRendererFactory, name=self.settings_prefix)
+
+        return renderer_factory(info)
+
+# bw-compat
+renderer_factory = MakoRendererFactoryHelper('mako.')
+
 class MakoRendererFactory(object):
     def __init__(self, lookup):
         self.lookup = lookup
