@@ -537,4 +537,3 @@ class DummyWarnings(object):
         self.msgs = []
     def warn(self, msg, typ, level):
         self.msgs.append(msg)
-
