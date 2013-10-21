@@ -89,15 +89,26 @@ def MakoRendererFactory(lookup, load_relative=False):
         if '#' in asset:
             asset, defname = asset.rsplit('#', 1)
 
-        if load_relative and ':' not in asset:
-            package = info.package
-            pp = package_path(package)
-            spec = os.path.join(pp, asset)
-            asset = asset_spec_from_abspath(spec, package)
+        spec = '%s.%s' % (asset, ext)
 
-        path = '%s.%s' % (asset, ext)
+        if load_relative:
+            isabspath = os.path.isabs(spec)
+            colon_in_name = ':' in spec
+            isabsspec = colon_in_name and (not isabspath)
+            isrelspec = (not isabsspec) and (not isabspath)
 
-        return MakoLookupTemplateRenderer(path, defname, lookup)
+            if isrelspec:
+                # convert relative asset spec to absolute asset spec
+                package = info.package
+                pp = package_path(package)
+                spec = os.path.join(pp, spec)
+                spec = asset_spec_from_abspath(spec, package)
+
+            elif isabspath:
+                # convert absolute path to absolute asset spec
+                spec = asset_spec_from_abspath(spec, package)
+
+        return MakoLookupTemplateRenderer(spec, defname, lookup)
     return renderer_factory
 
 class MakoRenderingException(Exception):
