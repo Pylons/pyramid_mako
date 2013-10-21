@@ -9,7 +9,6 @@ from zope.interface import (
 
 from pyramid.asset import (
     abspath_from_asset_spec,
-    resolve_asset_spec,
     )
 
 from pyramid.path import AssetResolver
