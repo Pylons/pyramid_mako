@@ -1,6 +1,15 @@
 Unreleased
 ==========
 
+- Add a new Configurator directive, ``config.add_mako_renderer`` which
+  can be used to add a new mako renderer for a given extension. This
+  directive accepts an optional ``settings_prefix`` to load settings and
+  configuration differently per-renderer as well.
+
+- Removed the private APIs, ``IMakoLookup``, ``MakoRendererFactoryHelper``,
+  and ``renderer_factory``. See the new ``config.add_mako_renderer`` API
+  for updating offending code.
+
 - Remove dependency on ``pyramid.interfaces.ITemplateRenderer`` from
   Pyramid 1.5.
 
