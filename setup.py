@@ -39,6 +39,7 @@ testing_extras = tests_require + [
     'coverage',
     'virtualenv', # for scaffolding tests
     ]
+
 requires = [
     'pyramid',
     'Mako>=0.3.6' # strict undefined
@@ -56,6 +57,7 @@ setup(name='pyramid_mako',
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.2",
+        "Programming Language :: Python :: 3.3",
         "Framework :: Pylons",
         "License :: Repoze Public License",
         ],

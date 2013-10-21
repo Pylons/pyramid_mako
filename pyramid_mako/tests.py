@@ -22,343 +22,228 @@ class Base(object):
     def tearDown(self):
         self.config.end()
 
-def maybe_unittest():
-    # The latest release of MarkupSafe (0.17) which is used by Mako is
-    # incompatible with Python 3.2, so we skip these tests if we cannot
-    # import a Mako module which ends up importing MarkupSafe.  Note that
-    # this version of MarkupSafe *is* compatible with Python 2.6, 2.7, and 3.3,
-    # so these tests should not be skipped on those platforms.
-    try:
-        import mako.lookup
-    except (ImportError, SyntaxError, AttributeError): # pragma: no cover
-        return object
-    else:
-        return unittest.TestCase
+class TestMakoRendererFactory(Base, unittest.TestCase):
+    def _getTargetClass(self):
+        from pyramid_mako import MakoRendererFactory
+        return MakoRendererFactory
 
-class Test_renderer_factory(Base, maybe_unittest()):
-    def _callFUT(self, info):
-        from pyramid_mako import renderer_factory
-        return renderer_factory(info)
+    def _callFUT(self, info, lookup=None):
+        factory = self._getTargetClass()(lookup)
+        return factory(info)
 
-    def _getLookup(self, name='mako.'):
-        from pyramid_mako import IMakoLookup
-        return self.config.registry.getUtility(IMakoLookup, name=name)
-
-    def test_hyphen_filenames(self):
-        from pyramid_mako import renderer_factory
-
-        info = DummyRendererInfo({
-            'name':'app:moon-and-world.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':{},
+    def _makeRendererInfo(self, spec, **kw):
+        opts = {
+            'name': spec,
+            'package': None,
+            'registry': self.config.registry,
+            'settings': self.config.get_settings(),
             'type': ''
-        })
+        }
+        opts.update(kw)
+        return DummyRendererInfo(opts)
 
-        result = renderer_factory(info)
-        self.assertEqual(result.path, 'app:moon-and-world.mak')
-
-    def test_no_directories(self):
-        info = DummyRendererInfo({
-            'name':'pyramid_mako.tests:fixtures/helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':{},
-            })
+    def test_asset_spec_filenames(self):
+        info = self._makeRendererInfo('app:moon-and-world.mak')
         renderer = self._callFUT(info)
-        lookup = self._getLookup()
-        self.assertEqual(lookup.directories, [])
-        self.assertEqual(lookup.filesystem_checks, False)
+        self.assertEqual(renderer.path, 'app:moon-and-world.mak')
+        self.assertTrue(renderer.defname is None)
+
+    def test_asset_spec_filenames_with_def(self):
+        info = self._makeRendererInfo('app:moon-and-world#def.mak')
+        renderer = self._callFUT(info)
+        self.assertEqual(renderer.path, 'app:moon-and-world.mak')
+        self.assertEqual(renderer.defname, 'def')
+
+    def test_asset_spec_subfolder_filenames(self):
+        info = self._makeRendererInfo(
+            'pyramid_mako.tests:fixtures/helloworld.mak')
+        renderer = self._callFUT(info)
         self.assertEqual(renderer.path,
                          'pyramid_mako.tests:fixtures/helloworld.mak')
-        self.assertEqual(renderer.lookup, lookup)
+        self.assertTrue(renderer.defname is None)
 
-    def test_no_lookup(self):
-        settings = {'mako.directories':self.templates_dir}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            })
+    def test_asset_spec_subfolder_filenames_with_def(self):
+        info = self._makeRendererInfo(
+            'pyramid_mako.tests:fixtures/helloworld#def.mak')
         renderer = self._callFUT(info)
-        lookup = self._getLookup()
-        self.assertEqual(lookup.directories, [self.templates_dir])
-        self.assertEqual(lookup.filesystem_checks, False)
-        self.assertEqual(renderer.path, 'helloworld.mak')
-        self.assertEqual(renderer.lookup, lookup)
+        self.assertEqual(renderer.path,
+                         'pyramid_mako.tests:fixtures/helloworld.mak')
+        self.assertEqual(renderer.defname, 'def')
+
+    def test_relative_filenames(self):
+        info = self._makeRendererInfo('templates/moon-and-world.mak')
+        renderer = self._callFUT(info)
+        self.assertEqual(renderer.path, 'templates/moon-and-world.mak')
+        self.assertTrue(renderer.defname is None)
+
+    def test_relative_filenames_with_def(self):
+        info = self._makeRendererInfo('templates/moon-and-world#def.mak')
+        renderer = self._callFUT(info)
+        self.assertEqual(renderer.path, 'templates/moon-and-world.mak')
+        self.assertEqual(renderer.defname, 'def')
+
+    def test_multiple_dotted_filenames(self):
+        info = self._makeRendererInfo('moon.and.world.mak')
+        renderer = self._callFUT(info)
+        self.assertEqual(renderer.path, 'moon.and.world.mak')
+        self.assertTrue(renderer.defname is None)
+
+    def test_multiple_dotted_filenames_with_def(self):
+        info = self._makeRendererInfo('moon.and.world#def.mak')
+        renderer = self._callFUT(info)
+        self.assertEqual(renderer.path, 'moon.and.world.mak')
+        self.assertEqual(renderer.defname, 'def')
+
+    def test_space_dot_name(self):
+        info = self._makeRendererInfo('hello .world.mako')
+        renderer = self._callFUT(info)
+        self.assertEqual(renderer.path, 'hello .world.mako')
+        self.assertTrue(renderer.defname is None)
+
+    def test_space_dot_name_with_def(self):
+        info = self._makeRendererInfo('hello .world#comp.mako')
+        renderer = self._callFUT(info)
+        self.assertEqual(renderer.path, 'hello .world.mako')
+        self.assertEqual(renderer.defname, 'comp')
+
+class Test_parse_options_from_settings(Base, unittest.TestCase):
+    def _callFUT(self, settings, settings_prefix='mako.'):
+        from pyramid_mako import parse_options_from_settings
+        return parse_options_from_settings(settings, settings_prefix,
+                                           self.config.maybe_dotted)
+
+    def test_no_directories(self):
+        result = self._callFUT({})
+        self.assertEqual(result['directories'], [])
+        self.assertEqual(result['filesystem_checks'], False)
+
+    def test_directories_path(self):
+        settings = {'mako.directories': self.templates_dir}
+        result = self._callFUT(settings)
+        self.assertEqual(result['directories'], [self.templates_dir])
+        self.assertEqual(result['filesystem_checks'], False)
 
     def test_composite_directories_path(self):
         twice = '\n' + self.templates_dir + '\n' + self.templates_dir + '\n'
-        settings = {'mako.directories':twice}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            })
-        self._callFUT(info)
-        lookup = self._getLookup()
-        self.assertEqual(lookup.directories, [self.templates_dir]*2)
+        settings = {'mako.directories': twice}
+        result = self._callFUT(settings)
+        self.assertEqual(result['directories'], [self.templates_dir] * 2)
 
     def test_directories_list(self):
         import sys
         import os.path
-        settings = {'mako.directories':['a', 'b']}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            })
-        self._callFUT(info)
-        lookup = self._getLookup()
+        settings = {'mako.directories': ['a', 'b']}
+        result = self._callFUT(settings)
         module_path = os.path.dirname(
             sys.modules['__main__'].__file__).rstrip('.') # ./setup.py
-        self.assertEqual(lookup.directories, [
+        self.assertEqual(result['directories'], [
             os.path.join(module_path, 'a'),
             os.path.join(module_path, 'b')])
 
     def test_with_module_directory_asset_spec(self):
         import os
         module_directory = 'pyramid_mako.tests:fixtures'
-        settings = {'mako.directories':self.templates_dir,
-                    'mako.module_directory':module_directory}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            })
-        self._callFUT(info)
-        lookup = self._getLookup()
+        settings = {'mako.directories': self.templates_dir,
+                    'mako.module_directory': module_directory}
+        result = self._callFUT(settings)
         fixtures = os.path.join(os.path.dirname(__file__), 'fixtures')
-        self.assertEqual(lookup.module_directory, fixtures)
+        self.assertEqual(result['module_directory'], fixtures)
 
     def test_with_module_directory_asset_abspath(self):
         import os
         fixtures = os.path.join(os.path.dirname(__file__), 'fixtures')
-        settings = {'mako.directories':self.templates_dir,
-                    'mako.module_directory':fixtures}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            })
-        self._callFUT(info)
-        lookup = self._getLookup()
-        self.assertEqual(lookup.module_directory, fixtures)
+        settings = {'mako.directories': self.templates_dir,
+                    'mako.module_directory': fixtures}
+        result = self._callFUT(settings)
+        self.assertEqual(result['module_directory'], fixtures)
 
     def test_with_input_encoding(self):
-        settings = {'mako.directories':self.templates_dir,
-                    'mako.input_encoding':'utf-16'}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            })
-        self._callFUT(info)
-        lookup = self._getLookup()
-        self.assertEqual(lookup.template_args['input_encoding'], 'utf-16')
+        settings = {'mako.directories': self.templates_dir,
+                    'mako.input_encoding': 'utf-16'}
+        result = self._callFUT(settings)
+        self.assertEqual(result['input_encoding'], 'utf-16')
 
     def test_with_error_handler(self):
-        settings = {'mako.directories':self.templates_dir,
-                    'mako.error_handler':'pyramid_mako.tests'}
         import pyramid_mako.tests
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            })
-        self._callFUT(info)
-        lookup = self._getLookup()
-        self.assertEqual(lookup.template_args['error_handler'], pyramid_mako.tests)
+        settings = {'mako.directories': self.templates_dir,
+                    'mako.error_handler': 'pyramid_mako.tests'}
+        result = self._callFUT(settings)
+        self.assertEqual(result['error_handler'], pyramid_mako.tests)
 
     def test_with_preprocessor(self):
-        settings = {'mako.directories':self.templates_dir,
-                    'mako.preprocessor':'pyramid_mako.tests'}
         import pyramid_mako.tests
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            })
-        self._callFUT(info)
-        lookup = self._getLookup()
-        self.assertEqual(lookup.template_args['preprocessor'], pyramid_mako.tests)
+        settings = {'mako.directories': self.templates_dir,
+                    'mako.preprocessor': 'pyramid_mako.tests'}
+        result = self._callFUT(settings)
+        self.assertEqual(result['preprocessor'], pyramid_mako.tests)
 
     def test_with_default_filters(self):
-        settings = {'mako.directories':self.templates_dir,
-                    'mako.default_filters':'\nh\ng\n\n'}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            })
-        self._callFUT(info)
-        lookup = self._getLookup()
-        self.assertEqual(lookup.template_args['default_filters'], ['h', 'g'])
+        settings = {'mako.directories': self.templates_dir,
+                    'mako.default_filters': '\nh\ng\n\n'}
+        result = self._callFUT(settings)
+        self.assertEqual(result['default_filters'], ['h', 'g'])
 
     def test_with_default_filters_list(self):
-        settings = {'mako.directories':self.templates_dir,
-                    'mako.default_filters':['h', 'g']}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            })
-        self._callFUT(info)
-        lookup = self._getLookup()
-        self.assertEqual(lookup.template_args['default_filters'], ['h', 'g'])
+        settings = {'mako.directories': self.templates_dir,
+                    'mako.default_filters': ['h', 'g']}
+        result = self._callFUT(settings)
+        self.assertEqual(result['default_filters'], ['h', 'g'])
 
     def test_with_imports(self):
-        settings = {'mako.directories':self.templates_dir,
-                    'mako.imports':'\none\ntwo\n\n'}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            })
-        self._callFUT(info)
-        lookup = self._getLookup()
-        self.assertEqual(lookup.template_args['imports'], ['one', 'two'])
+        settings = {'mako.directories': self.templates_dir,
+                    'mako.imports': '\none\ntwo\n\n'}
+        result = self._callFUT(settings)
+        self.assertEqual(result['imports'], ['one', 'two'])
 
     def test_with_imports_list(self):
-        settings = {'mako.directories':self.templates_dir,
-                    'mako.imports':['one', 'two']}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            })
-        self._callFUT(info)
-        lookup = self._getLookup()
-        self.assertEqual(lookup.template_args['imports'], ['one', 'two'])
+        settings = {'mako.directories': self.templates_dir,
+                    'mako.imports': ['one', 'two']}
+        result = self._callFUT(settings)
+        self.assertEqual(result['imports'], ['one', 'two'])
 
     def test_with_strict_undefined_true(self):
-        settings = {'mako.directories':self.templates_dir,
-                    'mako.strict_undefined':'true'}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            })
-        self._callFUT(info)
-        lookup = self._getLookup()
-        self.assertEqual(lookup.template_args['strict_undefined'], True)
+        settings = {'mako.directories': self.templates_dir,
+                    'mako.strict_undefined': 'true'}
+        result = self._callFUT(settings)
+        self.assertEqual(result['strict_undefined'], True)
 
     def test_with_strict_undefined_false(self):
-        settings = {'mako.directories':self.templates_dir,
-                    'mako.strict_undefined':'false'}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            })
-        self._callFUT(info)
-        lookup = self._getLookup()
-        self.assertEqual(lookup.template_args['strict_undefined'], False)
+        settings = {'mako.directories': self.templates_dir,
+                    'mako.strict_undefined': 'false'}
+        result = self._callFUT(settings)
+        self.assertEqual(result['strict_undefined'], False)
 
-    def test_with_lookup(self):
-        from pyramid_mako import IMakoLookup
-        lookup = dict()
-        self.config.registry.registerUtility(lookup, IMakoLookup, name='mako.')
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':{},
-            })
-        renderer = self._callFUT(info)
-        self.assertEqual(renderer.lookup, lookup)
-        self.assertEqual(renderer.path, 'helloworld.mak')
+    def test_reload_templates_namespace(self):
+        settings = {'mako.directories': self.templates_dir,
+                    'pyramid.reload_templates': True}
+        result = self._callFUT(settings)
+        self.assertEqual(result['filesystem_checks'], True)
 
-    def test_space_dot_name(self):
-        from pyramid_mako import renderer_factory
+    def test_reload_templates_namespace_text(self):
+        settings = {'mako.directories': self.templates_dir,
+                    'pyramid.reload_templates': 'True'}
+        result = self._callFUT(settings)
+        self.assertEqual(result['filesystem_checks'], True)
 
-        info = DummyRendererInfo({
-            'name':'hello .world.mako',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':{},
-        })
+    def test_multiple_registration_different_name(self):
+        import os.path
+        import sys
+        settings = {'mako.directories': 'a\n\nb',
+                    'othermako.directories': 'c\n\nd',
+                    'pyramid.reload_templates': 'true'}
+        result = self._callFUT(settings)
+        module_path = os.path.dirname(
+            sys.modules['__main__'].__file__).rstrip('.') # ./setup.py
+        self.assertEqual(result['directories'], [
+            os.path.join(module_path, 'a'),
+            os.path.join(module_path, 'b')])
 
-        result = renderer_factory(info)
-        self.assertEqual(result.path, 'hello .world.mako')
-        self.assertTrue(result.defname is None)
+        result = self._callFUT(settings, settings_prefix='othermako.')
+        self.assertEqual(result['directories'], [
+            os.path.join(module_path, 'c'),
+            os.path.join(module_path, 'd')])
 
-    def test_space_dot_name_def(self):
-        from pyramid_mako import renderer_factory
-
-        info = DummyRendererInfo({
-            'name':'hello .world#comp.mako',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':{},
-            })
-
-        result = renderer_factory(info)
-        self.assertEqual(result.path, 'hello .world.mako')
-        self.assertEqual(result.defname, 'comp')
-
-class MakoRendererFactoryHelperTests(Base, maybe_unittest()):
-    def _getTargetClass(self):
-        from pyramid_mako import MakoRendererFactoryHelper
-        return MakoRendererFactoryHelper
-
-    def _makeOne(self, *arg, **kw):
-        klass = self._getTargetClass()
-        return klass(*arg, **kw)
-
-    def _getLookup(self, name='mako.'):
-        from pyramid_mako import IMakoLookup
-        return self.config.registry.getUtility(IMakoLookup, name=name)
-
-    def test_no_settings_prefix(self):
-        settings = {'foo.directories':self.templates_dir}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            'type':'foo',
-            })
-        helper = self._makeOne()
-        renderer = helper(info)
-        lookup = self._getLookup('foo.')
-        self.assertEqual(lookup.directories, [self.templates_dir])
-        self.assertEqual(lookup.filesystem_checks, False)
-        self.assertEqual(renderer.path, 'helloworld.mak')
-        self.assertEqual(renderer.lookup, lookup)
-
-    def test_custom_settings_prefix(self):
-        settings = {'bar.directories':self.templates_dir}
-        info = DummyRendererInfo({
-            'name':'helloworld.mak',
-            'package':None,
-            'registry':self.config.registry,
-            'settings':settings,
-            'type':'foo',
-            })
-        helper = self._makeOne('bar.')
-        renderer = helper(info)
-        lookup = self._getLookup('bar.')
-        self.assertEqual(lookup.directories, [self.templates_dir])
-        self.assertEqual(lookup.filesystem_checks, False)
-        self.assertEqual(renderer.path, 'helloworld.mak')
-        self.assertEqual(renderer.lookup, lookup)
-
-class MakoLookupTemplateRendererTests(Base, maybe_unittest()):
+class MakoLookupTemplateRendererTests(Base, unittest.TestCase):
     def _getTargetClass(self):
         from pyramid_mako import MakoLookupTemplateRenderer
         return MakoLookupTemplateRenderer
@@ -370,7 +255,7 @@ class MakoLookupTemplateRendererTests(Base, maybe_unittest()):
     def test_call(self):
         lookup = DummyLookup()
         instance = self._makeOne('path', None, lookup)
-        result = instance({}, {'system':1})
+        result = instance({}, {'system': 1})
         self.assertTrue(isinstance(result, text_type))
         self.assertEqual(result, text_('result'))
 
@@ -378,26 +263,26 @@ class MakoLookupTemplateRendererTests(Base, maybe_unittest()):
         # lame
         lookup = DummyLookup()
         instance = self._makeOne('path', None, lookup)
-        result = instance({}, {'context':1})
+        result = instance({}, {'context': 1})
         self.assertTrue(isinstance(result, text_type))
         self.assertEqual(result, text_('result'))
-        self.assertEqual(lookup.values, {'_context':1})
+        self.assertEqual(lookup.values, {'_context': 1})
 
     def test_call_with_tuple_value(self):
         lookup = DummyLookup()
         instance = self._makeOne('path', None, lookup)
         warnings = DummyWarnings()
         instance.warnings = warnings
-        result = instance(('fub', {}), {'context':1})
+        result = instance(('fub', {}), {'context': 1})
         self.assertEqual(lookup.deffed, 'fub')
         self.assertEqual(result, text_('result'))
-        self.assertEqual(lookup.values, {'_context':1})
+        self.assertEqual(lookup.values, {'_context': 1})
         self.assertEqual(len(warnings.msgs), 1)
 
     def test_call_with_defname(self):
         lookup = DummyLookup()
         instance = self._makeOne('path', 'defname', lookup)
-        result = instance({}, {'system':1})
+        result = instance({}, {'system': 1})
         self.assertTrue(isinstance(result, text_type))
         self.assertEqual(result, text_('result'))
 
@@ -406,10 +291,10 @@ class MakoLookupTemplateRendererTests(Base, maybe_unittest()):
         instance = self._makeOne('path', 'defname', lookup)
         warnings = DummyWarnings()
         instance.warnings = warnings
-        result = instance(('defname', {}), {'context':1})
+        result = instance(('defname', {}), {'context': 1})
         self.assertEqual(lookup.deffed, 'defname')
         self.assertEqual(result, text_('result'))
-        self.assertEqual(lookup.values, {'_context':1})
+        self.assertEqual(lookup.values, {'_context': 1})
         self.assertEqual(len(warnings.msgs), 1)
 
     def test_call_with_defname_with_tuple_value_twice(self):
@@ -417,18 +302,18 @@ class MakoLookupTemplateRendererTests(Base, maybe_unittest()):
         instance1 = self._makeOne('path', 'defname', lookup)
         warnings = DummyWarnings()
         instance1.warnings = warnings
-        result1 = instance1(('defname1', {}), {'context':1})
+        result1 = instance1(('defname1', {}), {'context': 1})
         self.assertEqual(lookup.deffed, 'defname1')
         self.assertEqual(result1, text_('result'))
-        self.assertEqual(lookup.values, {'_context':1})
+        self.assertEqual(lookup.values, {'_context': 1})
         instance2 = self._makeOne('path', 'defname', lookup)
         warnings = DummyWarnings()
         instance2.warnings = warnings
-        result2 = instance2(('defname2', {}), {'context':2})
+        result2 = instance2(('defname2', {}), {'context': 2})
         self.assertNotEqual(lookup.deffed, 'defname1')
         self.assertEqual(lookup.deffed, 'defname2')
         self.assertEqual(result2, text_('result'))
-        self.assertEqual(lookup.values, {'_context':2})
+        self.assertEqual(lookup.values, {'_context': 2})
 
     def test_call_with_nondict_value(self):
         lookup = DummyLookup()
@@ -453,67 +338,64 @@ class MakoLookupTemplateRendererTests(Base, maybe_unittest()):
         self.assertTrue(isinstance(result, text_type))
         self.assertEqual(result, text_('result'))
 
-class TestIntegration(maybe_unittest()):
+class TestIntegration(unittest.TestCase):
     def setUp(self):
-        import pyramid_mako
         self.config = testing.setUp()
         self.config.add_settings({'mako.directories':
                                   'pyramid_mako.tests:fixtures'})
-        self.config.add_renderer('.mak',
-                                 pyramid_mako.renderer_factory)
+        self.config.include('pyramid_mako')
 
     def tearDown(self):
         self.config.end()
 
     def test_render(self):
         from pyramid.renderers import render
-        result = render('helloworld.mak', {'a':1}).replace('\r','')
+        result = render('helloworld.mak', {'a': 1}).replace('\r', '')
         self.assertEqual(result, text_('\nHello föö\n', 'utf-8'))
 
     def test_render_from_fs(self):
         from pyramid.renderers import render
-        self.config.add_settings({'reload_templates': True})
-        result = render('helloworld.mak', {'a':1}).replace('\r','')
+        result = render('helloworld.mak', {'a': 1}).replace('\r', '')
         self.assertEqual(result, text_('\nHello föö\n', 'utf-8'))
 
     def test_render_inheritance(self):
         from pyramid.renderers import render
-        result = render('helloinherit.mak', {}).replace('\r','')
+        result = render('helloinherit.mak', {}).replace('\r', '')
         self.assertEqual(result, text_('Layout\nHello World!\n'))
 
     def test_render_inheritance_pkg_spec(self):
         from pyramid.renderers import render
-        result = render('hello_inherit_pkg.mak', {}).replace('\r','')
+        result = render('hello_inherit_pkg.mak', {}).replace('\r', '')
         self.assertEqual(result, text_('Layout\nHello World!\n\n'))
 
     def test_render_namespace(self):
         from pyramid.renderers import render
-        result = render('hellocompo.mak', {}).replace('\r','')
+        result = render('hellocompo.mak', {}).replace('\r', '')
         self.assertEqual(result, text_('\nNamespace\nHello \nWorld!\n\n'))
 
     def test_render_to_response(self):
         from pyramid.renderers import render_to_response
-        result = render_to_response('helloworld.mak', {'a':1})
-        self.assertEqual(result.ubody.replace('\r',''),
+        result = render_to_response('helloworld.mak', {'a': 1})
+        self.assertEqual(result.ubody.replace('\r', ''),
                          text_('\nHello föö\n', 'utf-8'))
 
     def test_render_to_response_pkg_spec(self):
         from pyramid.renderers import render_to_response
-        result = render_to_response('pyramid_mako.tests:fixtures/helloworld.mak',
-                                    {'a':1})
+        result = render_to_response(
+            'pyramid_mako.tests:fixtures/helloworld.mak', {'a': 1})
         self.assertEqual(result.ubody.replace('\r', ''),
                          text_('\nHello föö\n', 'utf-8'))
 
     def test_render_with_abs_path(self):
         from pyramid.renderers import render
-        result = render('/helloworld.mak', {'a':1}).replace('\r','')
+        result = render('/helloworld.mak', {'a': 1}).replace('\r', '')
         self.assertEqual(result, text_('\nHello föö\n', 'utf-8'))
 
     def test_get_renderer(self):
         from pyramid.renderers import get_renderer
         result = get_renderer('helloworld.mak')
         self.assertEqual(
-            result.implementation().render_unicode().replace('\r',''),
+            result.implementation().render_unicode().replace('\r', ''),
             text_('\nHello föö\n', 'utf-8'))
 
     def test_template_not_found(self):
@@ -525,10 +407,19 @@ class TestIntegration(maybe_unittest()):
     def test_template_default_escaping(self):
         from pyramid.renderers import render
         result = render('nonminimal.mak',
-                        {'name':'<b>fred</b>'}).replace('\r','')
+                        {'name': '<b>fred</b>'}).replace('\r', '')
         self.assertEqual(result, text_('Hello, &lt;b&gt;fred&lt;/b&gt;!\n'))
 
-class TestPkgResourceTemplateLookup(maybe_unittest()):
+    def test_add_mako_renderer(self):
+        from pyramid.renderers import render
+        self.config.add_settings({'foo.directories':
+                                  'pyramid_mako.tests:fixtures'})
+        self.config.add_mako_renderer('.foo', settings_prefix='foo.')
+        result = render('nonminimal.foo',
+                        {'name': '<b>fred</b>'}).replace('\r', '')
+        self.assertEqual(result, text_('Hello, &lt;b&gt;fred&lt;/b&gt;!\n'))
+
+class TestPkgResourceTemplateLookup(unittest.TestCase):
     def _makeOne(self, **kw):
         from pyramid_mako import PkgResourceTemplateLookup
         return PkgResourceTemplateLookup(**kw)
@@ -536,7 +427,8 @@ class TestPkgResourceTemplateLookup(maybe_unittest()):
     def get_fixturedir(self):
         import os
         import pyramid_mako.tests
-        return os.path.join(os.path.dirname(pyramid_mako.tests.__file__), 'fixtures')
+        return os.path.join(os.path.dirname(pyramid_mako.tests.__file__),
+                            'fixtures')
 
     def test_adjust_uri_not_asset_spec(self):
         inst = self._makeOne()
@@ -586,14 +478,16 @@ class TestPkgResourceTemplateLookup(maybe_unittest()):
 
     def test_get_template_asset_spec_with_filesystem_checks(self):
         inst = self._makeOne(filesystem_checks=True)
-        result = inst.get_template('pyramid_mako.tests:fixtures/helloworld.mak')
+        result = inst.get_template(
+            'pyramid_mako.tests:fixtures/helloworld.mak')
         self.assertFalse(result is None)
 
     def test_get_template_asset_spec_with_module_dir(self):
         tmpdir = tempfile.mkdtemp()
         try:
             inst = self._makeOne(module_directory=tmpdir)
-            result = inst.get_template('pyramid_mako.tests:fixtures/helloworld.mak')
+            result = inst.get_template(
+                'pyramid_mako.tests:fixtures/helloworld.mak')
             self.assertFalse(result is None)
         finally:
             shutil.rmtree(tmpdir, ignore_errors=True)
@@ -643,4 +537,3 @@ class DummyWarnings(object):
         self.msgs = []
     def warn(self, msg, typ, level):
         self.msgs.append(msg)
-

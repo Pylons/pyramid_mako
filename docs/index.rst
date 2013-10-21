@@ -31,15 +31,11 @@ are completely equivalent:
 
     pyramid.includes = pyramid_mako
 
-Once activated either of these says, the following happens:
+Once activated, files with the ``.mako`` or ``.mak`` extension are
+considered to be :term:`Mako` templates.
 
-#) Files with the ``.mako`` or ``.mak`` extension are considered to be
-   :term:`Mako` templates.
-
-To setup the mako search path either one of the following steps must be taken:
-
-#) Add ``mako.directories`` to your ``.ini`` settings file using the pyramid
-   asset spec::
+To setup the mako search path add ``mako.directories`` to your ``.ini``
+settings file using the pyramid asset spec::
 
      mako.directories = yourapp:templates
 
@@ -242,6 +238,42 @@ configure the template as a :term:`renderer` like so:
 
 The above will render the ``bar`` def from within the ``foo.mak`` template
 instead of the entire template.
+
+Adding or Overriding a Renderer
+-------------------------------
+
+By default, pyramid_mako registers two renderers, one for ``.mako`` and
+another for ``.mak`` file extensions. The configuration for these renderers
+are loaded from the ``mako.`` settings in your ini file.
+
+It's possible to add Mako renderers for alternate file extensions, or
+override the default ``.mak`` and ``.mako`` renderers with your own settings
+using the :func:`pyramid_mako.add_mako_renderer` directive.
+
+.. code-block:: python
+   :linenos:
+
+   config.include('pyramid_mako')
+   config.add_mako_renderer('.mak', settings_prefix='mymak.')
+   config.add_mako_renderer('.html')
+   config.add_mako_renderer('.email', settings_prefix='makoemail.')
+
+At the end of this setup, there will be 4 renderers registered. ``.mako`` and
+``.html`` renderers are loaded from the ``mako.`` settings, and ``.mak`` is
+using the ``mymak.`` settings. Finally ``.email`` templates will be using
+the ``makoemail.`` settings. Some example usage follows:
+
+.. code-block:: python
+   :linenos:
+
+   from pyramid.renderers import render
+
+   @view_config(renderer='foo.html')
+   def show_email(request):
+       email_body = render('hello.email', {})
+       return {
+           'email_body': email_body,
+       }
 
 .. _mako_template_renderer_settings:
 

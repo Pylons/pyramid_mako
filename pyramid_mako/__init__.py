@@ -1,11 +1,9 @@
 import os
 import posixpath
 import sys
-import threading
 import warnings
 
 from zope.interface import (
-    implementer,
     Interface,
     )
 
@@ -20,13 +18,12 @@ from pyramid.compat import (
     )
 
 from pyramid.settings import asbool
-from pyramid.util import DottedNameResolver
 
 from mako.lookup import TemplateLookup
 from mako.exceptions import TopLevelLookupException
 from mako.exceptions import text_error_template
 
-class IMakoLookup(Interface):
+class IMakoRendererFactory(Interface):
     pass
 
 class PkgResourceTemplateLookup(TemplateLookup):
@@ -82,83 +79,17 @@ class PkgResourceTemplateLookup(TemplateLookup):
                     "Can not locate template for uri %r" % uri)
         return TemplateLookup.get_template(self, uri)
 
-registry_lock = threading.Lock()
-
-class MakoRendererFactoryHelper(object):
-    def __init__(self, settings_prefix=None):
-        self.settings_prefix = settings_prefix
-
-    def __call__(self, info):
+def MakoRendererFactory(lookup):
+    def renderer_factory(info):
         defname = None
         asset, ext = info.name.rsplit('.', 1)
         if '#' in asset:
             asset, defname = asset.rsplit('#', 1)
 
         path = '%s.%s' % (asset, ext)
-        registry = info.registry
-        settings = info.settings
-        settings_prefix = self.settings_prefix
-
-        if settings_prefix is None:
-            settings_prefix = info.type +'.'
-
-        lookup = registry.queryUtility(IMakoLookup, name=settings_prefix)
-
-        def sget(name, default=None):
-            return settings.get(settings_prefix + name, default)
-
-        if lookup is None:
-            reload_templates = settings.get('pyramid.reload_templates', None)
-            if reload_templates is None:
-                reload_templates = settings.get('reload_templates', False)
-            reload_templates = asbool(reload_templates)
-            directories = sget('directories', [])
-            module_directory = sget('module_directory', None)
-            input_encoding = sget('input_encoding', 'utf-8')
-            error_handler = sget('error_handler', None)
-            default_filters = sget('default_filters', 'h')
-            imports = sget('imports', None)
-            strict_undefined = asbool(sget('strict_undefined', False))
-            preprocessor = sget('preprocessor', None)
-            if not is_nonstr_iter(directories):
-                directories = list(filter(None, directories.splitlines()))
-            directories = [ abspath_from_asset_spec(d) for d in directories ]
-            if module_directory is not None:
-                module_directory = abspath_from_asset_spec(module_directory)
-            if error_handler is not None:
-                dotted = DottedNameResolver(info.package)
-                error_handler = dotted.maybe_resolve(error_handler)
-            if default_filters is not None:
-                if not is_nonstr_iter(default_filters):
-                    default_filters = list(filter(
-                        None, default_filters.splitlines()))
-            if imports is not None:
-                if not is_nonstr_iter(imports):
-                    imports = list(filter(None, imports.splitlines()))
-            if preprocessor is not None:
-                dotted = DottedNameResolver(info.package)
-                preprocessor = dotted.maybe_resolve(preprocessor)
-
-
-            lookup = PkgResourceTemplateLookup(
-                directories=directories,
-                module_directory=module_directory,
-                input_encoding=input_encoding,
-                error_handler=error_handler,
-                default_filters=default_filters,
-                imports=imports,
-                filesystem_checks=reload_templates,
-                strict_undefined=strict_undefined,
-                preprocessor=preprocessor
-                )
-
-            with registry_lock:
-                registry.registerUtility(lookup, IMakoLookup,
-                                         name=settings_prefix)
 
         return MakoLookupTemplateRenderer(path, defname, lookup)
-
-renderer_factory = MakoRendererFactoryHelper('mako.')
+    return renderer_factory
 
 class MakoRenderingException(Exception):
     def __init__(self, text):
@@ -224,16 +155,99 @@ class MakoLookupTemplateRenderer(object):
 
         return result
 
-def includeme(config): # pragma: no cover
-    """Set up standard configurator registrations.  Use via:
+def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
+    """ Parse options for use with Mako's TemplateLookup from settings."""
+    def sget(name, default=None):
+        return settings.get(settings_prefix + name, default)
+
+    reload_templates = settings.get('pyramid.reload_templates', None)
+    if reload_templates is None:
+        reload_templates = settings.get('reload_templates', False)
+    reload_templates = asbool(reload_templates)
+    directories = sget('directories', [])
+    module_directory = sget('module_directory', None)
+    input_encoding = sget('input_encoding', 'utf-8')
+    error_handler = sget('error_handler', None)
+    default_filters = sget('default_filters', 'h')
+    imports = sget('imports', None)
+    strict_undefined = asbool(sget('strict_undefined', False))
+    preprocessor = sget('preprocessor', None)
+    if not is_nonstr_iter(directories):
+        directories = list(filter(None, directories.splitlines()))
+    directories = [abspath_from_asset_spec(d) for d in directories]
+    if module_directory is not None:
+        module_directory = abspath_from_asset_spec(module_directory)
+    if error_handler is not None:
+        error_handler = maybe_dotted(error_handler)
+    if default_filters is not None:
+        if not is_nonstr_iter(default_filters):
+            default_filters = list(filter(
+                None, default_filters.splitlines()))
+    if imports is not None:
+        if not is_nonstr_iter(imports):
+            imports = list(filter(None, imports.splitlines()))
+    if preprocessor is not None:
+        preprocessor = maybe_dotted(preprocessor)
+
+    return dict(
+        directories=directories,
+        module_directory=module_directory,
+        input_encoding=input_encoding,
+        error_handler=error_handler,
+        default_filters=default_filters,
+        imports=imports,
+        filesystem_checks=reload_templates,
+        strict_undefined=strict_undefined,
+        preprocessor=preprocessor,
+    )
+
+def get_renderer_factory(config, settings_prefix):
+    """ Load a cached factory or create a new one."""
+    registry = config.registry
+    renderer_factory = registry.queryUtility(
+        IMakoRendererFactory, name=settings_prefix)
+    if renderer_factory is not None:
+        return renderer_factory
+
+    opts = parse_options_from_settings(
+        registry.settings, settings_prefix, config.maybe_dotted)
+    lookup = PkgResourceTemplateLookup(**opts)
+    renderer_factory = MakoRendererFactory(lookup)
+
+    registry.registerUtility(
+        renderer_factory, IMakoRendererFactory, name=settings_prefix)
+    return renderer_factory
+
+def add_mako_renderer(config, extension, settings_prefix='mako.'):
+    """ Register a Mako renderer for a template extension.
+
+    This function is available on the Pyramid configurator after
+    including the package:
+
+    .. code-block:: python
+
+       config.add_mako_renderer('.html', settings_prefix='mako.')
+
+    The renderer will load its configuration from a prefix in the Pyramid
+    settings dictionary. The default prefix is 'mako.'.
+    """
+    renderer_factory = get_renderer_factory(config, settings_prefix)
+    config.add_renderer(extension, renderer_factory)
+
+def includeme(config):
+    """ Set up standard configurator registrations.  Use via:
 
     .. code-block:: python
 
        config = Configurator()
        config.include('pyramid_mako')
 
-    Once this function has been invoked, the ``.mako`` renderer is
-    available for use in Pyramid
+    Once this function has been invoked, the ``.mako`` and ``.mak`` renderers
+    are available for use in Pyramid. This can be overridden and more may be
+    added via the ``config.add_mako_renderer`` directive. See
+    :func:`~pyramid_mako.add_mako_renderer` documentation for more information.
     """
-    config.add_renderer('.mako', renderer_factory)
-    config.add_renderer('.mak', renderer_factory)
+    config.add_directive('add_mako_renderer', add_mako_renderer)
+
+    config.add_mako_renderer('.mako')
+    config.add_mako_renderer('.mak')
