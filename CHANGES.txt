@@ -1,4 +1,4 @@
-Unreleased
+0.3 (2013-10-20)
 ==========
 
 - Add a new Configurator directive, ``config.add_mako_renderer`` which
