@@ -37,67 +37,33 @@ considered to be :term:`Mako` templates.
 Usage
 =====
 
-Once :term:`pyramid_mako` been activated ``.mako`` templates
-can be loaded either by looking up names that would be found on
-the :term:`Mako` search path or by looking up asset specifications.
+Once :term:`pyramid_mako` has been activated ``.mako`` templates can be
+used by the Pyramid rendering system.
 
-The ``Mako`` template renderer renders views using a Mako template.  When
-used, the view must return a Response object or a Python *dictionary*.  The
-dictionary items will then be used in the global template space. If the view
-callable returns anything but a Response object or a dictionary, an error
-will be raised.
+When used as the ``renderer`` argument of a view, the view must return a
+``Response`` object or a Python ``dict``.  The ``Response`` object would
+bypass the renderer entirely. Otherwise the items in the ``dict`` would be
+available in the global template space. If the view callable returns anything
+but a ``Response`` object or a ``dict``, an error will likely be raised.
 
-Template Lookups
-----------------
+.. _template_lookups:
 
-The default lookup mechanism for templates uses the :term:`Mako` search
-path. (specified with ``mako.directories``)
+Template Lookup Mechanisms
+--------------------------
 
-Rendering :term:`Mako` templates with a view like this is typically done as
-follows (where the ``templates`` directory is expected to live in the search
-path):
+There are several ways for Pyramid to find your :term:`Mako` templates.
 
-.. code-block:: python
- :linenos:
+Asset Specifications
+~~~~~~~~~~~~~~~~~~~~
 
- from pyramid.view import view_config
+Templates may always be defined using an :term:`asset specification`. These
+are strings which define an absolute location of the template, relative to
+some Python package. For example, ``myapp.views:templates/home.mako``.
+These specifications are supported throughout Pyramid and provide a
+fool-proof way to find any supporting assets bundled with your application.
 
- @view_config(renderer='mytemplate.mako')
- def myview(request):
-     return {'foo':1, 'bar':2}
-
-Rendering templates outside of a view (and without a request) can be
-done using the renderer API:
-
-.. code-block:: python
-   :linenos:
-
-   from pyramid.renderers import render_to_response
-   render_to_response('mytemplate.mako', {'foo':1, 'bar':2})
-
-When using a ``renderer`` argument to a view configuration to specify a Mako
-template, the value of the ``renderer`` may be a path relative to the
-``mako.directories`` setting (e.g.  ``some/template.mak``) or, alternately, it
-may be an *asset specification* (e.g. ``apackage:templates/sometemplate.mak``).
-Mako templates may internally inherit other Mako templates using a relative
-filename or a asset specification as desired.
-
-Here's an example view configuration which uses a relative path:
-
-.. code-block:: python
-   :linenos:
-
-   @view_config(renderer='foo.mak')
-   def hello_world(request):
-       return {'a':'1'}
-
-It's important to note that in Mako's case, the 'relative' path name
-``foo.mak`` above is not relative to the package, but is relative to the
-directory (or directories) configured for Mako via the ``mako.directories``
-configuration file setting.
-
-The renderer can alternately be provided in *asset specification*
-format. Here's an example view configuration which uses one:
+Here's an example view configuration which uses an
+:term:`asset specification`:
 
 .. code-block:: python
    :linenos:
@@ -106,13 +72,85 @@ format. Here's an example view configuration which uses one:
    def hello_world(request):
        return {'a':'1'}
 
-The above configuration will use the file named ``foo.mak`` in the
-``templates`` directory of the ``mypackage`` package.
+Asset specifications have some significant benefits in Pyramid, as they
+are fully overridable. An addon package can ship with code looking to
+render all of its rendering done using asset specs. Later another package
+can include the addon and provide customized templates without having to
+actually modify the addon package. See :ref:`overriding_assets_section` for
+more information.
 
-Looking up templates via an asset specification is a feature specific to
-:term:`Pyramid`. For further info please see :ref:`asset_specifications`.
-Overriding templates in this style can use the standard Pyramid asset
-overriding technique described in :ref:`overriding_assets_section`.
+Caller-Relative Template Lookup
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, templates are discovered relative to the caller's package. This
+means that if you define a view in a Python module, the templates would
+be found relative to the module's directory on the filesystem.
+
+Let's look at an example:
+
+.. code-block:: python
+   :linenos:
+
+   @view_config(renderer='templates/mytemplate.mako')
+   def myview(request):
+       return {'foo': 1, 'bar': 2}
+
+Imagine that the above code is in a ``myapp.admin.views`` module. The template
+would be relative to that module on the filesystem, as shown below::
+
+   myapp
+   |- __init__.py
+   `- admin
+      |- views.py
+      `- templates
+         `- mytemplate.mako
+
+One significant advantage of this approach over search paths (describe below)
+is that the path is actually converted into an :term:`asset specification`
+in the background. This allows the template lookup to be modified using
+Pyramid's powerful asset overriding APIs such as ``config.override_asset``.
+
+Caller-relative lookup also avoids naming collisions which can be common in a
+search path-based approach.
+
+Search Path-Based Template Lookup
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When used outside of Pyramid, Mako's default lookup mechanism is a search
+path. To use this mechanism within Pyramid, simply define configure the
+search path using the ``mako.directories`` configuration setting.
+
+.. warning::
+
+   Beware that search path-based template lookup is mutually exclusive with
+   the caller-relative mechanism described above. However different renderers
+   can be defined differently. See :ref:`adding_or_overriding_renderers`.
+
+Rendering :term:`Mako` templates with a search path is typically done as
+follows:
+
+.. code-block:: python
+   :linenos:
+
+   from pyramid.view import view_config
+
+   @view_config(renderer='mytemplate.mako')
+   def myview(request):
+       return {'foo':1, 'bar':2}
+
+We are now dependent on our configuration settings to tell us where the
+template may be located. Commonly a ``templates`` directory is created
+at the base of the package and the configurationf file will include
+the following directive::
+
+    mako.directories = mypkg:templates
+
+Templates Including Templates
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Mako allows template inheritance as well as other mechanisms for templates
+to load each other. The lookup mechanisms supported in these cases include
+asset specifications and template-relative names.
 
 Automatically Reloading Templates
 ---------------------------------
@@ -216,6 +254,8 @@ configure the template as a :term:`renderer` like so:
 The above will render the ``bar`` def from within the ``foo.mak`` template
 instead of the entire template.
 
+.. _adding_or_overriding_renderers:
+
 Adding or Overriding a Renderer
 -------------------------------
 
@@ -275,6 +315,11 @@ should be in :term:`asset specification` format, for example:
 ``my.package:templates`` would specify the ``templates`` folder relative
 to the location of the ``my.package`` Python package.
 
+.. warning::
+
+   Before using this setting, consider instead using caller-relative paths.
+   See :ref:`template_lookups`.
+
 +-----------------------------+
 | Config File Setting Name    |
 +=============================+
@@ -290,7 +335,9 @@ Mako Module Directory
 The value supplied here tells Mako where to store compiled Mako templates. If
 omitted, compiled templates will be stored in memory. This value should be an
 absolute path, for example: ``%(here)s/data/templates`` would use a directory
-called ``data/templates`` in the same parent directory as the INI file.
+called ``data/templates`` in the same parent directory as the INI file. The
+folder can also be an asset specification, defining a directory relative to
+the package.
 
 +-----------------------------+
 | Config File Setting Name    |

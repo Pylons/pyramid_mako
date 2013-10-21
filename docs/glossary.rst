@@ -21,7 +21,7 @@ Glossary
       A set of bindings that make templates written for the :term:`Mako`
       templating system work under the :term:`Pyramid` web framework.
 
-   Asset spec
+   asset specification
        A string representing the path to a directory or file present in a
        Python module.  See `Understanding Asset Specifications
        <http://docs.pylonsproject.org/projects/pyramid/en/latest/narr/assets.html#understanding-asset-specifications>`_
