@@ -44,7 +44,7 @@ settings file using the pyramid asset spec::
     If you do not explicitly configure your mako search path it will
     default to the root of your application.  If configured in this way all
     subsequent paths will need to be specified relative to the root of your
-    application's package.  For example:
+    application's package. For example:
 
     Without the search path configured:
 
@@ -134,7 +134,7 @@ The above configuration will use the file named ``foo.mak`` in the
 ``templates`` directory of the ``mypackage`` package.
 
 Looking up templates via an asset specification is a feature specific to
-:term:`Pyramid`.  For further info please see :ref:`asset_specifications`.
+:term:`Pyramid`. For further info please see :ref:`asset_specifications`.
 Overriding templates in this style can use the standard Pyramid asset
 overriding technique described in :ref:`overriding_assets_section`.
 
@@ -142,7 +142,7 @@ Automatically Reloading Templates
 ---------------------------------
 
 It's often convenient to see changes you make to a template file appear
-immediately without needing to restart the application process.  Pyramid allows
+immediately without needing to restart the application process. Pyramid allows
 you to configure your application development environment so that a change to a
 template will be automatically detected, and the template will be reloaded on
 the next rendering.
@@ -196,7 +196,7 @@ look like:
 
 This template doesn't use any advanced features of Mako, only the
 ``${}`` replacement syntax for names that are passed in as
-:term:`renderer globals`.  See the `the Mako documentation
+:term:`renderer globals`. See the `the Mako documentation
 <http://www.makotemplates.org/>`_ to use more advanced features.
 
 Template Variables provided by Pyramid
