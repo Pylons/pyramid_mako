@@ -1,3 +1,11 @@
+unreleased
+==========
+
+- Caller-relative template lookup is now supported. To enable this feature,
+  do *not* specify the ``mako.directories`` setting in your configuration.
+  All templates specified as non-absolute paths will be discovered relative
+  to the caller package.
+
 0.3 (2013-10-20)
 ================
 
