@@ -72,13 +72,19 @@ class PkgResourceTemplateLookup(TemplateLookup):
                 else:
                     return self._collection[adjusted]
             except KeyError:
-                resolver = AssetResolver()
-                asset = resolver.resolve(uri)
+                asset = AssetResolver().resolve(uri)
                 if asset.exists():
                     srcfile = asset.abspath()
                     return self._load(srcfile, adjusted)
                 raise TopLevelLookupException(
                     "Can not locate template for uri %r" % uri)
+        elif isabs and not self.directories:
+            # hack around the fact that mako actually allows an absolute
+            # path to be specified which is actually relative to the
+            # mako.directories directory.
+            # this check will treat it as truly absolute if we have no
+            # mako.directories setting
+            return self._load(uri, uri)
         return TemplateLookup.get_template(self, uri)
 
 def MakoRendererFactory(lookup, load_relative=False):
