@@ -8,14 +8,17 @@ from zope.interface import (
     )
 
 from pyramid.asset import (
-    resolve_asset_spec,
     abspath_from_asset_spec,
+    asset_spec_from_abspath,
+    resolve_asset_spec,
     )
 
 from pyramid.compat import (
     is_nonstr_iter,
     reraise,
     )
+
+from pyramid.path import package_path
 
 from pyramid.settings import asbool
 
@@ -79,12 +82,18 @@ class PkgResourceTemplateLookup(TemplateLookup):
                     "Can not locate template for uri %r" % uri)
         return TemplateLookup.get_template(self, uri)
 
-def MakoRendererFactory(lookup):
+def MakoRendererFactory(lookup, load_relative=False):
     def renderer_factory(info):
         defname = None
         asset, ext = info.name.rsplit('.', 1)
         if '#' in asset:
             asset, defname = asset.rsplit('#', 1)
+
+        if load_relative and ':' not in asset:
+            package = info.package
+            pp = package_path(package)
+            spec = os.path.join(pp, asset)
+            asset = asset_spec_from_abspath(spec, package)
 
         path = '%s.%s' % (asset, ext)
 
@@ -212,7 +221,10 @@ def get_renderer_factory(config, settings_prefix):
     opts = parse_options_from_settings(
         registry.settings, settings_prefix, config.maybe_dotted)
     lookup = PkgResourceTemplateLookup(**opts)
-    renderer_factory = MakoRendererFactory(lookup)
+
+    load_relative = not opts['directories']
+    renderer_factory = MakoRendererFactory(lookup,
+                                           load_relative=load_relative)
 
     registry.registerUtility(
         renderer_factory, IMakoRendererFactory, name=settings_prefix)
