@@ -9,16 +9,15 @@ from zope.interface import (
 
 from pyramid.asset import (
     abspath_from_asset_spec,
-    asset_spec_from_abspath,
     resolve_asset_spec,
     )
+
+from pyramid.path import AssetResolver
 
 from pyramid.compat import (
     is_nonstr_iter,
     reraise,
     )
-
-from pyramid.path import package_path
 
 from pyramid.settings import asbool
 
@@ -74,9 +73,10 @@ class PkgResourceTemplateLookup(TemplateLookup):
                 else:
                     return self._collection[adjusted]
             except KeyError:
-                pname, path = resolve_asset_spec(uri)
-                srcfile = abspath_from_asset_spec(path, pname)
-                if os.path.isfile(srcfile):
+                resolver = AssetResolver()
+                asset = resolver.resolve(uri)
+                if asset.exists():
+                    srcfile = asset.abspath()
                     return self._load(srcfile, adjusted)
                 raise TopLevelLookupException(
                     "Can not locate template for uri %r" % uri)
@@ -99,14 +99,9 @@ def MakoRendererFactory(lookup, load_relative=False):
 
             if isrelspec:
                 # convert relative asset spec to absolute asset spec
-                package = info.package
-                pp = package_path(package)
-                spec = os.path.join(pp, spec)
-                spec = asset_spec_from_abspath(spec, package)
-
-            elif isabspath:
-                # convert absolute path to absolute asset spec
-                spec = asset_spec_from_abspath(spec, package)
+                resolver = AssetResolver(info.package)
+                asset = resolver.resolve(spec)
+                spec = asset.absspec()
 
         return MakoLookupTemplateRenderer(spec, defname, lookup)
     return renderer_factory
