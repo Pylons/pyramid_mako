@@ -28,8 +28,13 @@ class TestMakoRendererFactory(Base, unittest.TestCase):
         from pyramid_mako import MakoRendererFactory
         return MakoRendererFactory
 
+    def _makeOne(self, lookup):
+        factory = self._getTargetClass()()
+        factory.lookup = DummyLookup()
+        return factory
+
     def _callFUT(self, info, lookup=None):
-        factory = self._getTargetClass()(lookup)
+        factory = self._makeOne(lookup)
         return factory(info)
 
     def _makeRendererInfo(self, spec, **kw):
@@ -414,6 +419,19 @@ class TestIntegrationWithDirectories(unittest.TestCase):
                         {'name': '<b>fred</b>'}).replace('\r', '')
         self.assertEqual(result, text_('Hello, &lt;b&gt;fred&lt;/b&gt;!\n'))
 
+    def test_add_mako_renderer_before_settings(self):
+        from pyramid.renderers import render
+        config = testing.setUp(autocommit=False)
+        config.include('pyramid_mako')
+        config.add_mako_renderer('.foo', settings_prefix='foo.')
+        config.add_settings({'foo.directories':
+                             'pyramid_mako.tests:fixtures'})
+        config.commit()
+        result = render('nonminimal.foo',
+                        {'name': '<b>fred</b>'}).replace('\r', '')
+        self.assertEqual(result, text_('Hello, &lt;b&gt;fred&lt;/b&gt;!\n'))
+        config.end()
+
 class TestIntegrationNoDirectories(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -589,6 +607,8 @@ class TestMakoRenderingException(unittest.TestCase):
         self.assertEqual(repr(exc), 'text')
 
 class DummyLookup(object):
+    directories = True
+
     def __init__(self, exc=None):
         self.exc = exc
 
