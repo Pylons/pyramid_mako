@@ -23,9 +23,6 @@ from mako.lookup import TemplateLookup
 from mako.exceptions import TopLevelLookupException
 from mako.exceptions import text_error_template
 
-class IMakoRendererFactory(Interface):
-    pass
-
 class PkgResourceTemplateLookup(TemplateLookup):
     """TemplateLookup subclass that handles asset specification URIs"""
     def adjust_uri(self, uri, relativeto):
@@ -79,8 +76,10 @@ class PkgResourceTemplateLookup(TemplateLookup):
                     "Can not locate template for uri %r" % uri)
         return TemplateLookup.get_template(self, uri)
 
-def MakoRendererFactory(lookup):
-    def renderer_factory(info):
+class MakoRendererFactory(object):
+    lookup = None
+
+    def __call__(self, info):
         defname = None
         asset, ext = info.name.rsplit('.', 1)
         if '#' in asset:
@@ -88,8 +87,7 @@ def MakoRendererFactory(lookup):
 
         path = '%s.%s' % (asset, ext)
 
-        return MakoLookupTemplateRenderer(path, defname, lookup)
-    return renderer_factory
+        return MakoLookupTemplateRenderer(path, defname, self.lookup)
 
 class MakoRenderingException(Exception):
     def __init__(self, text):
@@ -201,23 +199,6 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
         preprocessor=preprocessor,
     )
 
-def get_renderer_factory(config, settings_prefix):
-    """ Load a cached factory or create a new one."""
-    registry = config.registry
-    renderer_factory = registry.queryUtility(
-        IMakoRendererFactory, name=settings_prefix)
-    if renderer_factory is not None:
-        return renderer_factory
-
-    opts = parse_options_from_settings(
-        registry.settings, settings_prefix, config.maybe_dotted)
-    lookup = PkgResourceTemplateLookup(**opts)
-    renderer_factory = MakoRendererFactory(lookup)
-
-    registry.registerUtility(
-        renderer_factory, IMakoRendererFactory, name=settings_prefix)
-    return renderer_factory
-
 def add_mako_renderer(config, extension, settings_prefix='mako.'):
     """ Register a Mako renderer for a template extension.
 
@@ -231,8 +212,17 @@ def add_mako_renderer(config, extension, settings_prefix='mako.'):
     The renderer will load its configuration from a prefix in the Pyramid
     settings dictionary. The default prefix is 'mako.'.
     """
-    renderer_factory = get_renderer_factory(config, settings_prefix)
+    renderer_factory = MakoRendererFactory()
     config.add_renderer(extension, renderer_factory)
+
+    def register():
+        registry = config.registry
+        opts = parse_options_from_settings(
+            registry.settings, settings_prefix, config.maybe_dotted)
+        lookup = PkgResourceTemplateLookup(**opts)
+        renderer_factory.lookup = lookup
+
+    config.action(('mako-renderer', extension), register)
 
 def includeme(config):
     """ Set up standard configurator registrations.  Use via:
