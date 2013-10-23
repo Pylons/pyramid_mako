@@ -1,5 +1,5 @@
-next release
-============
+0.3.1 (2013-10-22)
+==================
 
 - Re-enable lazy loading of the mako renderer, allowing the settings
   to be configured after pyramid_mako has been included, as long as everything
