@@ -8,9 +8,10 @@ from zope.interface import (
     )
 
 from pyramid.asset import (
-    resolve_asset_spec,
     abspath_from_asset_spec,
     )
+
+from pyramid.path import AssetResolver
 
 from pyramid.compat import (
     is_nonstr_iter,
@@ -68,16 +69,24 @@ class PkgResourceTemplateLookup(TemplateLookup):
                 else:
                     return self._collection[adjusted]
             except KeyError:
-                pname, path = resolve_asset_spec(uri)
-                srcfile = abspath_from_asset_spec(path, pname)
-                if os.path.isfile(srcfile):
+                asset = AssetResolver().resolve(uri)
+                if asset.exists():
+                    srcfile = asset.abspath()
                     return self._load(srcfile, adjusted)
                 raise TopLevelLookupException(
                     "Can not locate template for uri %r" % uri)
+        elif isabs and not self.directories:
+            # hack around the fact that mako actually allows an absolute
+            # path to be specified which is actually relative to the
+            # mako.directories directory.
+            # this check will treat it as truly absolute if we have no
+            # mako.directories setting
+            return self._load(uri, uri)
         return TemplateLookup.get_template(self, uri)
 
 class MakoRendererFactory(object):
     lookup = None
+    load_relative = True
 
     def __call__(self, info):
         defname = None
@@ -85,9 +94,22 @@ class MakoRendererFactory(object):
         if '#' in asset:
             asset, defname = asset.rsplit('#', 1)
 
-        path = '%s.%s' % (asset, ext)
+        spec = '%s.%s' % (asset, ext)
 
-        return MakoLookupTemplateRenderer(path, defname, self.lookup)
+        # only enable caller-relative lookup if there's no search path
+        if not self.lookup.directories:
+            isabspath = os.path.isabs(spec)
+            colon_in_name = ':' in spec
+            isabsspec = colon_in_name and (not isabspath)
+            isrelspec = (not isabsspec) and (not isabspath)
+
+            if isrelspec:
+                # convert relative asset spec to absolute asset spec
+                resolver = AssetResolver(info.package)
+                asset = resolver.resolve(spec)
+                spec = asset.absspec()
+
+        return MakoLookupTemplateRenderer(spec, defname, self.lookup)
 
 class MakoRenderingException(Exception):
     def __init__(self, text):
@@ -220,6 +242,7 @@ def add_mako_renderer(config, extension, settings_prefix='mako.'):
         opts = parse_options_from_settings(
             registry.settings, settings_prefix, config.maybe_dotted)
         lookup = PkgResourceTemplateLookup(**opts)
+
         renderer_factory.lookup = lookup
 
     config.action(('mako-renderer', extension), register)

@@ -1,6 +1,8 @@
 ## come on python gimme some of that sweet, sweet -*- coding: utf-8 -*-
 
+import os.path
 import shutil
+import sys
 import tempfile
 import unittest
 
@@ -15,7 +17,6 @@ class Base(object):
     def setUp(self):
         self.config = testing.setUp()
         self.config.begin()
-        import os
         here = os.path.abspath(os.path.dirname(__file__))
         self.templates_dir = os.path.join(here, 'fixtures')
 
@@ -29,7 +30,7 @@ class TestMakoRendererFactory(Base, unittest.TestCase):
 
     def _makeOne(self, lookup):
         factory = self._getTargetClass()()
-        factory.lookup = lookup
+        factory.lookup = DummyLookup()
         return factory
 
     def _callFUT(self, info, lookup=None):
@@ -135,8 +136,6 @@ class Test_parse_options_from_settings(Base, unittest.TestCase):
         self.assertEqual(result['directories'], [self.templates_dir] * 2)
 
     def test_directories_list(self):
-        import sys
-        import os.path
         settings = {'mako.directories': ['a', 'b']}
         result = self._callFUT(settings)
         module_path = os.path.dirname(
@@ -146,7 +145,6 @@ class Test_parse_options_from_settings(Base, unittest.TestCase):
             os.path.join(module_path, 'b')])
 
     def test_with_module_directory_asset_spec(self):
-        import os
         module_directory = 'pyramid_mako.tests:fixtures'
         settings = {'mako.directories': self.templates_dir,
                     'mako.module_directory': module_directory}
@@ -155,7 +153,6 @@ class Test_parse_options_from_settings(Base, unittest.TestCase):
         self.assertEqual(result['module_directory'], fixtures)
 
     def test_with_module_directory_asset_abspath(self):
-        import os
         fixtures = os.path.join(os.path.dirname(__file__), 'fixtures')
         settings = {'mako.directories': self.templates_dir,
                     'mako.module_directory': fixtures}
@@ -231,8 +228,6 @@ class Test_parse_options_from_settings(Base, unittest.TestCase):
         self.assertEqual(result['filesystem_checks'], True)
 
     def test_multiple_registration_different_name(self):
-        import os.path
-        import sys
         settings = {'mako.directories': 'a\n\nb',
                     'othermako.directories': 'c\n\nd',
                     'pyramid.reload_templates': 'true'}
@@ -343,7 +338,7 @@ class MakoLookupTemplateRendererTests(Base, unittest.TestCase):
         self.assertTrue(isinstance(result, text_type))
         self.assertEqual(result, text_('result'))
 
-class TestIntegration(unittest.TestCase):
+class TestIntegrationWithDirectories(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
         self.config.add_settings({'mako.directories':
@@ -437,13 +432,97 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(result, text_('Hello, &lt;b&gt;fred&lt;/b&gt;!\n'))
         config.end()
 
+class TestIntegrationNoDirectories(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+        self.config.include('pyramid_mako')
+
+    def tearDown(self):
+        self.config.end()
+
+    def test_render(self):
+        from pyramid.renderers import render
+        result = render('fixtures/helloworld.mak', {'a': 1}).replace('\r', '')
+        self.assertEqual(result, text_('\nHello föö\n', 'utf-8'))
+
+    def test_render_from_fs(self):
+        from pyramid.renderers import render
+        result = render('fixtures/helloworld.mak', {'a': 1}).replace('\r', '')
+        self.assertEqual(result, text_('\nHello föö\n', 'utf-8'))
+
+    def test_render_inheritance(self):
+        from pyramid.renderers import render
+        result = render('fixtures/helloinherit.mak', {}).replace('\r', '')
+        self.assertEqual(result, text_('Layout\nHello World!\n'))
+
+    def test_render_inheritance_pkg_spec(self):
+        from pyramid.renderers import render
+        result = render('fixtures/hello_inherit_pkg.mak', {}).replace('\r', '')
+        self.assertEqual(result, text_('Layout\nHello World!\n\n'))
+
+    def test_render_namespace(self):
+        from pyramid.renderers import render
+        result = render('fixtures/hellocompo.mak', {}).replace('\r', '')
+        self.assertEqual(result, text_('\nNamespace\nHello \nWorld!\n\n'))
+
+    def test_render_to_response(self):
+        from pyramid.renderers import render_to_response
+        result = render_to_response('fixtures/helloworld.mak', {'a': 1})
+        self.assertEqual(result.ubody.replace('\r', ''),
+                         text_('\nHello föö\n', 'utf-8'))
+
+    def test_render_to_response_pkg_spec(self):
+        from pyramid.renderers import render_to_response
+        result = render_to_response(
+            'pyramid_mako.tests:fixtures/helloworld.mak', {'a': 1})
+        self.assertEqual(result.ubody.replace('\r', ''),
+                         text_('\nHello föö\n', 'utf-8'))
+
+    def test_render_with_abs_path(self):
+        from pyramid.renderers import render
+        here = os.path.abspath(os.path.dirname(__file__))
+        templates_dir = os.path.join(here, 'fixtures')
+        template = os.path.join(templates_dir, 'helloworld.mak')
+        result = render(template, {'a': 1}).replace('\r', '')
+        self.assertEqual(result, text_('\nHello föö\n', 'utf-8'))
+
+    def test_get_renderer(self):
+        from pyramid.renderers import get_renderer
+        result = get_renderer('fixtures/helloworld.mak')
+        self.assertEqual(
+            result.implementation().render_unicode().replace('\r', ''),
+            text_('\nHello föö\n', 'utf-8'))
+
+    def test_template_not_found(self):
+        from pyramid.renderers import render
+        from mako.exceptions import TemplateLookupException
+        self.assertRaises(TemplateLookupException, render,
+                          'fixtures/helloworld_not_here.mak', {})
+
+    def test_template_default_escaping(self):
+        from pyramid.renderers import render
+        result = render('fixtures/nonminimal.mak',
+                        {'name': '<b>fred</b>'}).replace('\r', '')
+        self.assertEqual(result, text_('Hello, &lt;b&gt;fred&lt;/b&gt;!\n'))
+
+    def test_add_mako_renderer(self):
+        from pyramid.renderers import render
+        self.config.add_settings({'foo.directories':
+                                  'pyramid_mako.tests:fixtures'})
+        self.config.add_mako_renderer('.foo', settings_prefix='foo.')
+        result = render('nonminimal.foo',
+                        {'name': '<b>fred</b>'}).replace('\r', '')
+        self.assertEqual(result, text_('Hello, &lt;b&gt;fred&lt;/b&gt;!\n'))
+        result = render('fixtures/nonminimal.mak',
+                        {'name': '<b>fred</b>'}).replace('\r', '')
+        self.assertEqual(result, text_('Hello, &lt;b&gt;fred&lt;/b&gt;!\n'))
+
 class TestPkgResourceTemplateLookup(unittest.TestCase):
     def _makeOne(self, **kw):
         from pyramid_mako import PkgResourceTemplateLookup
         return PkgResourceTemplateLookup(**kw)
 
     def get_fixturedir(self):
-        import os
         import pyramid_mako.tests
         return os.path.join(os.path.dirname(pyramid_mako.tests.__file__),
                             'fixtures')
@@ -528,6 +607,8 @@ class TestMakoRenderingException(unittest.TestCase):
         self.assertEqual(repr(exc), 'text')
 
 class DummyLookup(object):
+    directories = True
+
     def __init__(self, exc=None):
         self.exc = exc
 
