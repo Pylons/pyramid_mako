@@ -1,5 +1,5 @@
-unreleased
-==========
+Next Release
+============
 
 - Caller-relative template lookup is now supported. To enable this feature,
   do *not* specify the ``mako.directories`` setting in your configuration.
