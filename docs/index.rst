@@ -5,7 +5,7 @@ pyramid_mako
 Overview
 ========
 
-:term:`pyramid_mako` is a set of bindings that make templates written for the
+:term:`pyramid_mako` is a set of bindings that makes templates written for the
 :term:`Mako` templating system work under the :term:`Pyramid` web framework.
 :term:`Mako` is a templating system written by Mike Bayer.
 
@@ -105,7 +105,7 @@ would be relative to that module on the filesystem, as shown below::
       `- templates
          `- mytemplate.mako
 
-One significant advantage of this approach over search paths (describe below)
+One significant advantage of this approach over search paths (described below)
 is that the path is actually converted into an :term:`asset specification`
 in the background. This allows the template lookup to be modified using
 Pyramid's powerful asset overriding APIs such as ``config.override_asset``.
@@ -117,7 +117,7 @@ Search Path-Based Template Lookup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When used outside of Pyramid, Mako's default lookup mechanism is a search
-path. To use this mechanism within Pyramid, simply define configure the
+path. To use this mechanism within Pyramid, simply define the
 search path using the ``mako.directories`` configuration setting.
 
 .. warning::
@@ -140,7 +140,7 @@ follows:
 
 We are now dependent on our configuration settings to tell us where the
 template may be located. Commonly a ``templates`` directory is created
-at the base of the package and the configurationf file will include
+at the base of the package and the configuration file will include
 the following directive::
 
     mako.directories = mypkg:templates
@@ -166,7 +166,7 @@ the next rendering.
    Auto-template-reload behavior is not recommended for production sites as it
    slows rendering slightly; it's usually only desirable during development.
 
-In order to turn on automatic reloading of templates, you can use an
+In order to turn on automatic reloading of templates, you can use a
 configuration file setting, or an environment variable.
 
 To use a setting in the application ``.ini`` file for the same
@@ -469,7 +469,7 @@ Unit Testing
 ============
 
 When you are running unit tests, you will be required to use
-``config.include('pyramid_mako')`` to add :term:`pyramid_mako` so that it's
+``config.include('pyramid_mako')`` to add :term:`pyramid_mako` so that its
 renderers are added to the config and can be used.:
 
 .. code-block:: python
