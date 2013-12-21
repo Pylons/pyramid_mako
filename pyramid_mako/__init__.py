@@ -139,9 +139,6 @@ class MakoLookupTemplateRenderer(object):
         return self.lookup.get_template(self.path)
 
     def __call__(self, value, system):
-        context = system.pop('context', None)
-        if context is not None:
-            system['_context'] = context
         # tuple returned to be deprecated
         if isinstance(value, tuple):
             self.warnings.warn(
@@ -153,10 +150,20 @@ class MakoLookupTemplateRenderer(object):
                 DeprecationWarning,
                 3)
             self.defname, value = value
+        # Update the system dictionary with the values from the user
         try:
             system.update(value)
         except (TypeError, ValueError):
             raise ValueError('renderer was passed non-dictionary as value')
+
+        # Check if 'context' in the dictionary
+        context = system.pop('context', None)
+
+        # Rename 'context' to '_context' because Mako internally already has a
+        # variable named 'context'
+        if context is not None:
+            system['_context'] = context
+
         template = self.implementation()
         if self.defname is not None:
             template = template.get_def(self.defname)
