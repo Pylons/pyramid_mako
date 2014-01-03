@@ -1,6 +1,12 @@
 Next Release
 ============
 
+- Change the way that custom user values passed to the renderer are merged with
+  the system provided variables. This allows the user to pass in a variable
+  named 'context' and have it correctly override the system provided context,
+  and THEN get correctly renamed so that Mako doesn't complain about a variable
+  being passed in that isn't allowed due to it being reserved.
+
 - Caller-relative template lookup is now supported. To enable this feature,
   do *not* specify the ``mako.directories`` setting in your configuration.
   All templates specified as non-absolute paths will be discovered relative
