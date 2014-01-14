@@ -180,9 +180,9 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
     def sget(name, default=None):
         return settings.get(settings_prefix + name, default)
 
-    reload_templates = settings.get('pyramid.reload_templates', None)
+    reload_templates = sget('reload_templates', None)
     if reload_templates is None:
-        reload_templates = settings.get('reload_templates', False)
+        reload_templates = settings.get('pyramid.reload_templates', None)
     reload_templates = asbool(reload_templates)
     directories = sget('directories', [])
     module_directory = sget('module_directory', None)

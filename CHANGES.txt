@@ -6,6 +6,9 @@ Next Release
   All templates specified as non-absolute paths will be discovered relative
   to the caller package.
 
+- Allow overriding the ``pyramid.reload_templates`` using
+  ``mako.reload_templates``.
+
 0.3.1 (2013-10-22)
 ==================
 
