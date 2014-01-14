@@ -120,12 +120,6 @@ When used outside of Pyramid, Mako's default lookup mechanism is a search
 path. To use this mechanism within Pyramid, simply define the
 search path using the ``mako.directories`` configuration setting.
 
-.. warning::
-
-   Beware that search path-based template lookup is mutually exclusive with
-   the caller-relative mechanism described above. However different renderers
-   can be defined differently. See :ref:`adding_or_overriding_renderers`.
-
 Rendering :term:`Mako` templates with a search path is typically done as
 follows:
 
@@ -314,11 +308,6 @@ The value(s) supplied here are passed in as the template directories. They
 should be in :term:`asset specification` format, for example:
 ``my.package:templates`` would specify the ``templates`` folder relative
 to the location of the ``my.package`` Python package.
-
-.. warning::
-
-   Before using this setting, consider instead using caller-relative paths.
-   See :ref:`template_lookups`.
 
 +-----------------------------+
 | Config File Setting Name    |

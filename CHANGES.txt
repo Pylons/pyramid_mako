@@ -1,10 +1,9 @@
 Next Release
 ============
 
-- Caller-relative template lookup is now supported. To enable this feature,
-  do *not* specify the ``mako.directories`` setting in your configuration.
-  All templates specified as non-absolute paths will be discovered relative
-  to the caller package.
+- Caller-relative template lookup is now supported. Any template that fails
+  to be found in the default search paths will be searched relative to the
+  caller package.
 
 - Allow overriding the ``pyramid.reload_templates`` using
   ``mako.reload_templates``.
