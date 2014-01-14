@@ -30,10 +30,12 @@ class TestMakoRendererFactory(Base, unittest.TestCase):
 
     def _makeOne(self, lookup):
         factory = self._getTargetClass()()
-        factory.lookup = DummyLookup()
+        factory.lookup = lookup
         return factory
 
     def _callFUT(self, info, lookup=None):
+        if lookup is None:
+            lookup = DummyLookup()
         factory = self._makeOne(lookup)
         return factory(info)
 
@@ -51,20 +53,20 @@ class TestMakoRendererFactory(Base, unittest.TestCase):
     def test_asset_spec_filenames(self):
         info = self._makeRendererInfo('app:moon-and-world.mak')
         renderer = self._callFUT(info)
-        self.assertEqual(renderer.path, 'app:moon-and-world.mak')
+        self.assertEqual(renderer.template.path, 'app:moon-and-world.mak')
         self.assertTrue(renderer.defname is None)
 
     def test_asset_spec_filenames_with_def(self):
         info = self._makeRendererInfo('app:moon-and-world#def.mak')
         renderer = self._callFUT(info)
-        self.assertEqual(renderer.path, 'app:moon-and-world.mak')
+        self.assertEqual(renderer.template.path, 'app:moon-and-world.mak')
         self.assertEqual(renderer.defname, 'def')
 
     def test_asset_spec_subfolder_filenames(self):
         info = self._makeRendererInfo(
             'pyramid_mako.tests:fixtures/helloworld.mak')
         renderer = self._callFUT(info)
-        self.assertEqual(renderer.path,
+        self.assertEqual(renderer.template.path,
                          'pyramid_mako.tests:fixtures/helloworld.mak')
         self.assertTrue(renderer.defname is None)
 
@@ -72,44 +74,44 @@ class TestMakoRendererFactory(Base, unittest.TestCase):
         info = self._makeRendererInfo(
             'pyramid_mako.tests:fixtures/helloworld#def.mak')
         renderer = self._callFUT(info)
-        self.assertEqual(renderer.path,
+        self.assertEqual(renderer.template.path,
                          'pyramid_mako.tests:fixtures/helloworld.mak')
         self.assertEqual(renderer.defname, 'def')
 
     def test_relative_filenames(self):
         info = self._makeRendererInfo('templates/moon-and-world.mak')
         renderer = self._callFUT(info)
-        self.assertEqual(renderer.path, 'templates/moon-and-world.mak')
+        self.assertEqual(renderer.template.path, 'templates/moon-and-world.mak')
         self.assertTrue(renderer.defname is None)
 
     def test_relative_filenames_with_def(self):
         info = self._makeRendererInfo('templates/moon-and-world#def.mak')
         renderer = self._callFUT(info)
-        self.assertEqual(renderer.path, 'templates/moon-and-world.mak')
+        self.assertEqual(renderer.template.path, 'templates/moon-and-world.mak')
         self.assertEqual(renderer.defname, 'def')
 
     def test_multiple_dotted_filenames(self):
         info = self._makeRendererInfo('moon.and.world.mak')
         renderer = self._callFUT(info)
-        self.assertEqual(renderer.path, 'moon.and.world.mak')
+        self.assertEqual(renderer.template.path, 'moon.and.world.mak')
         self.assertTrue(renderer.defname is None)
 
     def test_multiple_dotted_filenames_with_def(self):
         info = self._makeRendererInfo('moon.and.world#def.mak')
         renderer = self._callFUT(info)
-        self.assertEqual(renderer.path, 'moon.and.world.mak')
+        self.assertEqual(renderer.template.path, 'moon.and.world.mak')
         self.assertEqual(renderer.defname, 'def')
 
     def test_space_dot_name(self):
         info = self._makeRendererInfo('hello .world.mako')
         renderer = self._callFUT(info)
-        self.assertEqual(renderer.path, 'hello .world.mako')
+        self.assertEqual(renderer.template.path, 'hello .world.mako')
         self.assertTrue(renderer.defname is None)
 
     def test_space_dot_name_with_def(self):
         info = self._makeRendererInfo('hello .world#comp.mako')
         renderer = self._callFUT(info)
-        self.assertEqual(renderer.path, 'hello .world.mako')
+        self.assertEqual(renderer.template.path, 'hello .world.mako')
         self.assertEqual(renderer.defname, 'comp')
 
 class Test_parse_options_from_settings(Base, unittest.TestCase):
@@ -253,90 +255,83 @@ class MakoLookupTemplateRendererTests(Base, unittest.TestCase):
         return klass(*arg, **kw)
 
     def test_call(self):
-        lookup = DummyLookup()
-        instance = self._makeOne('path', None, lookup)
+        template = DummyTemplate()
+        instance = self._makeOne(template, None)
         result = instance({}, {'system': 1})
         self.assertTrue(isinstance(result, text_type))
         self.assertEqual(result, text_('result'))
 
     def test_call_with_system_context(self):
         # lame
-        lookup = DummyLookup()
-        instance = self._makeOne('path', None, lookup)
+        template = DummyTemplate()
+        instance = self._makeOne(template, None)
         result = instance({}, {'context': 1})
         self.assertTrue(isinstance(result, text_type))
         self.assertEqual(result, text_('result'))
-        self.assertEqual(lookup.values, {'_context': 1})
+        self.assertEqual(template.values, {'_context': 1})
 
     def test_call_with_tuple_value(self):
-        lookup = DummyLookup()
-        instance = self._makeOne('path', None, lookup)
+        template = DummyTemplate()
+        instance = self._makeOne(template, None)
         warnings = DummyWarnings()
         instance.warnings = warnings
         result = instance(('fub', {}), {'context': 1})
-        self.assertEqual(lookup.deffed, 'fub')
+        self.assertEqual(template.deffed, 'fub')
         self.assertEqual(result, text_('result'))
-        self.assertEqual(lookup.values, {'_context': 1})
+        self.assertEqual(template.values, {'_context': 1})
         self.assertEqual(len(warnings.msgs), 1)
 
     def test_call_with_defname(self):
-        lookup = DummyLookup()
-        instance = self._makeOne('path', 'defname', lookup)
+        template = DummyTemplate()
+        instance = self._makeOne(template, 'defname')
         result = instance({}, {'system': 1})
         self.assertTrue(isinstance(result, text_type))
         self.assertEqual(result, text_('result'))
 
     def test_call_with_defname_with_tuple_value(self):
-        lookup = DummyLookup()
-        instance = self._makeOne('path', 'defname', lookup)
+        template = DummyTemplate()
+        instance = self._makeOne(template, 'defname')
         warnings = DummyWarnings()
         instance.warnings = warnings
         result = instance(('defname', {}), {'context': 1})
-        self.assertEqual(lookup.deffed, 'defname')
+        self.assertEqual(template.deffed, 'defname')
         self.assertEqual(result, text_('result'))
-        self.assertEqual(lookup.values, {'_context': 1})
+        self.assertEqual(template.values, {'_context': 1})
         self.assertEqual(len(warnings.msgs), 1)
 
     def test_call_with_defname_with_tuple_value_twice(self):
-        lookup = DummyLookup()
-        instance1 = self._makeOne('path', 'defname', lookup)
+        template = DummyTemplate()
+        instance1 = self._makeOne(template, 'defname')
         warnings = DummyWarnings()
         instance1.warnings = warnings
         result1 = instance1(('defname1', {}), {'context': 1})
-        self.assertEqual(lookup.deffed, 'defname1')
+        self.assertEqual(template.deffed, 'defname1')
         self.assertEqual(result1, text_('result'))
-        self.assertEqual(lookup.values, {'_context': 1})
-        instance2 = self._makeOne('path', 'defname', lookup)
+        self.assertEqual(template.values, {'_context': 1})
+        instance2 = self._makeOne(template, 'defname')
         warnings = DummyWarnings()
         instance2.warnings = warnings
         result2 = instance2(('defname2', {}), {'context': 2})
-        self.assertNotEqual(lookup.deffed, 'defname1')
-        self.assertEqual(lookup.deffed, 'defname2')
+        self.assertNotEqual(template.deffed, 'defname1')
+        self.assertEqual(template.deffed, 'defname2')
         self.assertEqual(result2, text_('result'))
-        self.assertEqual(lookup.values, {'_context': 2})
+        self.assertEqual(template.values, {'_context': 2})
 
     def test_call_with_nondict_value(self):
-        lookup = DummyLookup()
-        instance = self._makeOne('path', None, lookup)
+        template = DummyTemplate()
+        instance = self._makeOne(template, None)
         self.assertRaises(ValueError, instance, None, {})
 
     def test_call_render_raises(self):
         from pyramid_mako import MakoRenderingException
-        lookup = DummyLookup(exc=NotImplementedError)
-        instance = self._makeOne('path', None, lookup)
+        template = DummyTemplate(render_exc=NotImplementedError)
+        instance = self._makeOne(template, None)
         try:
             instance({}, {})
         except MakoRenderingException as e:
             self.assertTrue('NotImplementedError' in e.text)
         else: # pragma: no cover
             raise AssertionError
-
-    def test_implementation(self):
-        lookup = DummyLookup()
-        instance = self._makeOne('path', None, lookup)
-        result = instance.implementation().render_unicode()
-        self.assertTrue(isinstance(result, text_type))
-        self.assertEqual(result, text_('result'))
 
 class TestIntegrationWithDirectories(unittest.TestCase):
     def setUp(self):
@@ -395,7 +390,7 @@ class TestIntegrationWithDirectories(unittest.TestCase):
         from pyramid.renderers import get_renderer
         result = get_renderer('helloworld.mak')
         self.assertEqual(
-            result.implementation().render_unicode().replace('\r', ''),
+            result.template.render_unicode().replace('\r', ''),
             text_('\nHello föö\n', 'utf-8'))
 
     def test_template_not_found(self):
@@ -490,7 +485,7 @@ class TestIntegrationNoDirectories(unittest.TestCase):
         from pyramid.renderers import get_renderer
         result = get_renderer('fixtures/helloworld.mak')
         self.assertEqual(
-            result.implementation().render_unicode().replace('\r', ''),
+            result.template.render_unicode().replace('\r', ''),
             text_('\nHello föö\n', 'utf-8'))
 
     def test_template_not_found(self):
@@ -606,23 +601,30 @@ class TestMakoRenderingException(unittest.TestCase):
         self.assertEqual(str(exc), 'text')
         self.assertEqual(repr(exc), 'text')
 
+class DummyRenderer(object):
+    def __init__(self, template, defname):
+        self.template = template
+        self.defname = defname
+
 class DummyLookup(object):
     directories = True
-
-    def __init__(self, exc=None):
-        self.exc = exc
+    renderer_factory = DummyRenderer
 
     def get_template(self, path):
+        return DummyTemplate(path)
+
+class DummyTemplate(object):
+    def __init__(self, path=None, render_exc=None):
         self.path = path
-        return self
+        self.render_exc = render_exc
 
     def get_def(self, path):
         self.deffed = path
         return self
 
     def render_unicode(self, **values):
-        if self.exc:
-            raise self.exc
+        if self.render_exc:
+            raise self.render_exc
         self.values = values
         return text_('result')
 
