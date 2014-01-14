@@ -3,10 +3,6 @@ import posixpath
 import sys
 import warnings
 
-from zope.interface import (
-    Interface,
-    )
-
 from pyramid.asset import (
     abspath_from_asset_spec,
     )
