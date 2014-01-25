@@ -18,7 +18,7 @@ from pyramid.compat import (
     reraise,
     )
 
-from pyramid.settings import asbool
+from pyramid.settings import asbool, aslist
 
 from mako.lookup import TemplateLookup
 from mako.exceptions import TopLevelLookupException
@@ -193,7 +193,9 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
     strict_undefined = asbool(sget('strict_undefined', False))
     preprocessor = sget('preprocessor', None)
     if not is_nonstr_iter(directories):
-        directories = list(filter(None, directories.splitlines()))
+        # Since we parse a value that comes from an .ini config,
+        # we treat whitespaces and newline characters equally as list item separators.
+        directories = aslist(directories, flatten=True)
     directories = [abspath_from_asset_spec(d) for d in directories]
     if module_directory is not None:
         module_directory = abspath_from_asset_spec(module_directory)
