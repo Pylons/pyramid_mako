@@ -1,6 +1,8 @@
 Next Release
 ============
 
+- Drop testing dependency on ``nose-selecttests``.
+
 - Caller-relative template lookup is now supported. To enable this feature,
   do *not* specify the ``mako.directories`` setting in your configuration.
   All templates specified as non-absolute paths will be discovered relative
