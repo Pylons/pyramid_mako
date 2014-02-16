@@ -135,6 +135,12 @@ class Test_parse_options_from_settings(Base, unittest.TestCase):
         result = self._callFUT(settings)
         self.assertEqual(result['directories'], [self.templates_dir] * 2)
 
+    def test_composite_directories_path_spaces(self):
+        twice = self.templates_dir + ' ' + self.templates_dir
+        settings = {'mako.directories': twice}
+        result = self._callFUT(settings)
+        self.assertEqual(result['directories'], [self.templates_dir] * 2)
+
     def test_directories_list(self):
         settings = {'mako.directories': ['a', 'b']}
         result = self._callFUT(settings)
