@@ -451,6 +451,12 @@ class TestIntegrationNoDirectories(unittest.TestCase):
         result = render('fixtures/helloworld.mak', {'a': 1}).replace('\r', '')
         self.assertEqual(result, text_('\nHello föö\n', 'utf-8'))
 
+    def test_render_notfound(self):
+        from pyramid.renderers import render
+        from mako.exceptions import TemplateLookupException
+        self.assertRaises(TemplateLookupException, render,
+                'pyramid_mako:fixtures/helloworld_not_here.mak', {})
+
     def test_render_inheritance(self):
         from pyramid.renderers import render
         result = render('fixtures/helloinherit.mak', {}).replace('\r', '')
