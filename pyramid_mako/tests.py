@@ -613,14 +613,8 @@ class TestMakoRenderingException(unittest.TestCase):
         self.assertEqual(str(exc), 'text')
         self.assertEqual(repr(exc), 'text')
 
-class DummyRenderer(object):
-    def __init__(self, template, defname):
-        self.template = template
-        self.defname = defname
-
 class DummyLookup(object):
     directories = True
-    renderer_factory = DummyRenderer
 
     def get_template(self, path):
         return DummyTemplate(path)
