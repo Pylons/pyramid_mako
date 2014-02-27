@@ -1,4 +1,4 @@
-1.0a1 (2014-02-27)
+1.0a2 (2014-02-27)
 ==================
 
 - Caller-relative template lookup is now supported. Any template that fails
