@@ -99,9 +99,14 @@ class MakoLookupTemplateRenderer(object):
     """
     warnings = warnings # for testing
 
-    def __init__(self, template, defname):
-        self.template = template
+    def __init__(self, spec, defname, lookup):
+        self.spec = spec
         self.defname = defname
+        self.lookup = lookup
+
+    @property
+    def template(self):
+        return self.lookup.get_template(self.spec)
 
     def __call__(self, value, system):
         # tuple returned to be deprecated
@@ -167,18 +172,17 @@ class MakoRendererFactory(object):
 
         try:
             # try to find the template using default search paths
-            template = self.lookup.get_template(spec)
+            self.lookup.get_template(spec)
         except TemplateLookupException:
             if isrelspec:
                 # convert relative asset spec to absolute asset spec
                 resolver = AssetResolver(info.package)
                 asset = resolver.resolve(spec)
                 spec = asset.absspec()
-                template = self.lookup.get_template(spec)
             else:
                 raise
 
-        return self.renderer_factory(template, defname)
+        return self.renderer_factory(spec, defname, self.lookup)
 
 def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
     """ Parse options for use with Mako's TemplateLookup from settings."""
