@@ -1,3 +1,8 @@
+Unreleased
+==========
+
+- Fix an packaging issue whereby *.foo files were not included in the MANIFEST.
+
 1.0a2 (2014-02-27)
 ==================
 
