@@ -97,9 +97,34 @@ class MakoLookupTemplateRenderer(object):
     inside the ``template`` will then be rendered.
     """
 
-    def __init__(self, template, defname):
-        self.template = template
+    @property
+    def template(self):
+        spec = self.spec
+        isabspath = os.path.isabs(spec)
+        colon_in_name = ':' in spec
+        isabsspec = colon_in_name and (not isabspath)
+        isrelspec = (not isabsspec) and (not isabspath)
+
+        try:
+            # try to find the template using default search paths
+            template = self.lookup.get_template(spec)
+        except TemplateLookupException:
+            if isrelspec:
+                # convert relative asset spec to absolute asset spec
+                resolver = AssetResolver(self.package)
+                asset = resolver.resolve(spec)
+                spec = asset.absspec()
+                template = self.lookup.get_template(spec)
+            else:
+                raise
+
+        return template
+
+    def __init__(self, lookup, spec, defname, package):
+        self.lookup = lookup
+        self.spec = spec
         self.defname = defname
+        self.package = package
 
     def __call__(self, value, system):
         # Update the system dictionary with the values from the user
@@ -146,25 +171,7 @@ class MakoRendererFactory(object):
 
         spec = '%s.%s' % (asset, ext)
 
-        isabspath = os.path.isabs(spec)
-        colon_in_name = ':' in spec
-        isabsspec = colon_in_name and (not isabspath)
-        isrelspec = (not isabsspec) and (not isabspath)
-
-        try:
-            # try to find the template using default search paths
-            template = self.lookup.get_template(spec)
-        except TemplateLookupException:
-            if isrelspec:
-                # convert relative asset spec to absolute asset spec
-                resolver = AssetResolver(info.package)
-                asset = resolver.resolve(spec)
-                spec = asset.absspec()
-                template = self.lookup.get_template(spec)
-            else:
-                raise
-
-        return self.renderer_factory(template, defname)
+        return self.renderer_factory(self.lookup, spec, defname, info.package)
 
 def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
     """ Parse options for use with Mako's TemplateLookup from settings."""
