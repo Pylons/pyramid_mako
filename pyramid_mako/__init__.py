@@ -1,7 +1,6 @@
 import os
 import posixpath
 import sys
-import warnings
 
 from pyramid.asset import (
     abspath_from_asset_spec,
@@ -97,24 +96,37 @@ class MakoLookupTemplateRenderer(object):
     ``package:path/to/template#defname.mako``, a function named ``defname``
     inside the ``template`` will then be rendered.
     """
-    warnings = warnings # for testing
 
-    def __init__(self, template, defname):
-        self.template = template
+    @property
+    def template(self):
+        spec = self.spec
+        isabspath = os.path.isabs(spec)
+        colon_in_name = ':' in spec
+        isabsspec = colon_in_name and (not isabspath)
+        isrelspec = (not isabsspec) and (not isabspath)
+
+        try:
+            # try to find the template using default search paths
+            template = self.lookup.get_template(spec)
+        except TemplateLookupException:
+            if isrelspec:
+                # convert relative asset spec to absolute asset spec
+                resolver = AssetResolver(self.package)
+                asset = resolver.resolve(spec)
+                spec = asset.absspec()
+                template = self.lookup.get_template(spec)
+            else:
+                raise
+
+        return template
+
+    def __init__(self, lookup, spec, defname, package):
+        self.lookup = lookup
+        self.spec = spec
         self.defname = defname
+        self.package = package
 
     def __call__(self, value, system):
-        # tuple returned to be deprecated
-        if isinstance(value, tuple):
-            self.warnings.warn(
-                'Using a tuple in the form (\'defname\', {}) to render a '
-                'Mako partial will be deprecated in the future. Use a '
-                'Mako template renderer as documented in the "Using A '
-                'Mako def name Within a Renderer Name" chapter of the '
-                'Pyramid narrative documentation instead',
-                DeprecationWarning,
-                3)
-            self.defname, value = value
         # Update the system dictionary with the values from the user
         try:
             system.update(value)
@@ -149,7 +161,6 @@ class MakoLookupTemplateRenderer(object):
 
 class MakoRendererFactory(object):
     lookup = None
-    load_relative = True
     renderer_factory = staticmethod(MakoLookupTemplateRenderer) # testing
 
     def __call__(self, info):
@@ -160,25 +171,7 @@ class MakoRendererFactory(object):
 
         spec = '%s.%s' % (asset, ext)
 
-        isabspath = os.path.isabs(spec)
-        colon_in_name = ':' in spec
-        isabsspec = colon_in_name and (not isabspath)
-        isrelspec = (not isabsspec) and (not isabspath)
-
-        try:
-            # try to find the template using default search paths
-            template = self.lookup.get_template(spec)
-        except TemplateLookupException:
-            if isrelspec:
-                # convert relative asset spec to absolute asset spec
-                resolver = AssetResolver(info.package)
-                asset = resolver.resolve(spec)
-                spec = asset.absspec()
-                template = self.lookup.get_template(spec)
-            else:
-                raise
-
-        return self.renderer_factory(template, defname)
+        return self.renderer_factory(self.lookup, spec, defname, info.package)
 
 def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
     """ Parse options for use with Mako's TemplateLookup from settings."""

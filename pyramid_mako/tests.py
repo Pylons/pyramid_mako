@@ -261,77 +261,41 @@ class MakoLookupTemplateRendererTests(Base, unittest.TestCase):
         return klass(*arg, **kw)
 
     def test_call(self):
-        template = DummyTemplate()
-        instance = self._makeOne(template, None)
+        lookup = DummyLookup()
+        instance = self._makeOne(lookup, 'pyramid_mako:test.mako', None, None)
         result = instance({}, {'system': 1})
         self.assertTrue(isinstance(result, text_type))
         self.assertEqual(result, text_('result'))
 
     def test_call_with_system_context(self):
         # lame
-        template = DummyTemplate()
-        instance = self._makeOne(template, None)
+        lookup = DummyLookup()
+        instance = self._makeOne(lookup, 'pyramid_mako:test.mako', None, None)
         result = instance({}, {'context': 1})
         self.assertTrue(isinstance(result, text_type))
         self.assertEqual(result, text_('result'))
-        self.assertEqual(template.values, {'_context': 1})
-
-    def test_call_with_tuple_value(self):
-        template = DummyTemplate()
-        instance = self._makeOne(template, None)
-        warnings = DummyWarnings()
-        instance.warnings = warnings
-        result = instance(('fub', {}), {'context': 1})
-        self.assertEqual(template.deffed, 'fub')
-        self.assertEqual(result, text_('result'))
-        self.assertEqual(template.values, {'_context': 1})
-        self.assertEqual(len(warnings.msgs), 1)
 
     def test_call_with_defname(self):
-        template = DummyTemplate()
-        instance = self._makeOne(template, 'defname')
+        lookup = DummyLookup()
+        instance = self._makeOne(lookup, 'pyramid_mako:test.mako', 'defname', None)
         result = instance({}, {'system': 1})
         self.assertTrue(isinstance(result, text_type))
         self.assertEqual(result, text_('result'))
 
-    def test_call_with_defname_with_tuple_value(self):
-        template = DummyTemplate()
-        instance = self._makeOne(template, 'defname')
-        warnings = DummyWarnings()
-        instance.warnings = warnings
-        result = instance(('defname', {}), {'context': 1})
-        self.assertEqual(template.deffed, 'defname')
-        self.assertEqual(result, text_('result'))
-        self.assertEqual(template.values, {'_context': 1})
-        self.assertEqual(len(warnings.msgs), 1)
-
-    def test_call_with_defname_with_tuple_value_twice(self):
-        template = DummyTemplate()
-        instance1 = self._makeOne(template, 'defname')
-        warnings = DummyWarnings()
-        instance1.warnings = warnings
-        result1 = instance1(('defname1', {}), {'context': 1})
-        self.assertEqual(template.deffed, 'defname1')
-        self.assertEqual(result1, text_('result'))
-        self.assertEqual(template.values, {'_context': 1})
-        instance2 = self._makeOne(template, 'defname')
-        warnings = DummyWarnings()
-        instance2.warnings = warnings
-        result2 = instance2(('defname2', {}), {'context': 2})
-        self.assertNotEqual(template.deffed, 'defname1')
-        self.assertEqual(template.deffed, 'defname2')
-        self.assertEqual(result2, text_('result'))
-        self.assertEqual(template.values, {'_context': 2})
-
     def test_call_with_nondict_value(self):
-        template = DummyTemplate()
-        instance = self._makeOne(template, None)
+        lookup = DummyLookup()
+        instance = self._makeOne(lookup, 'pyramid_mako:test.mako', None, None)
         self.assertRaises(ValueError, instance, None, {})
+
+    def test_call_with_tuple_value(self):
+        lookup = DummyLookup()
+        instance = self._makeOne(lookup, 'pyramid_mako:test.mako', None, None)
+        self.assertRaises(ValueError, instance, ('test', {}), {})
 
     def test_call_render_raises(self):
         from pyramid_mako import MakoRenderingException
-        template = DummyTemplate(render_exc=NotImplementedError)
-        instance = self._makeOne(template, None)
+        lookup = DummyLookup(render_exc=NotImplementedError)
+        instance = self._makeOne(lookup, 'pyramid_mako:test.mako', None, None)
         try:
             instance({}, {})
         except MakoRenderingException as e:
@@ -616,8 +580,12 @@ class TestMakoRenderingException(unittest.TestCase):
 class DummyLookup(object):
     directories = True
 
+    def __init__(self, *args, **kw):
+        self.dt_kw = kw
+        self.dt_args = args
+
     def get_template(self, path):
-        return DummyTemplate(path)
+        return DummyTemplate(path, *self.dt_args, **self.dt_kw)
 
 class DummyTemplate(object):
     def __init__(self, path=None, render_exc=None):
@@ -637,10 +605,3 @@ class DummyTemplate(object):
 class DummyRendererInfo(object):
     def __init__(self, kw):
         self.__dict__.update(kw)
-
-
-class DummyWarnings(object):
-    def __init__(self):
-        self.msgs = []
-    def warn(self, msg, typ, level):
-        self.msgs.append(msg)

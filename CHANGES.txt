@@ -1,6 +1,11 @@
 Unreleased
 ==========
 
+- Fix issue #19, whereby pyramid.reload_templates stopped functioning due to
+  changes in pyramid_mako. The lookup is now completed at template render,
+  instead of when the factory returns the renderer.
+- Tuple return values in the form of ('defname', {}) are no longer supported,
+  and will result in a ValueError being raised.
 - Fix an packaging issue whereby *.foo files were not included in the MANIFEST.
 
 1.0a2 (2014-02-27)
