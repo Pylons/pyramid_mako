@@ -45,7 +45,7 @@ requires = [
 ]
 
 setup(name='pyramid_mako',
-      version='1.0a2',
+      version='1.0a3',
       description='Mako template bindings for the Pyramid web framework',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
