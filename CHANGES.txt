@@ -1,6 +1,8 @@
 Unreleased
 ==========
 
+- Tuple return values in the form of ('defname', {}) are no longer supported,
+  and will result in a ValueError being raised.
 - Fix an packaging issue whereby *.foo files were not included in the MANIFEST.
 
 1.0a2 (2014-02-27)

@@ -1,7 +1,6 @@
 import os
 import posixpath
 import sys
-import warnings
 
 from pyramid.asset import (
     abspath_from_asset_spec,
@@ -97,24 +96,12 @@ class MakoLookupTemplateRenderer(object):
     ``package:path/to/template#defname.mako``, a function named ``defname``
     inside the ``template`` will then be rendered.
     """
-    warnings = warnings # for testing
 
     def __init__(self, template, defname):
         self.template = template
         self.defname = defname
 
     def __call__(self, value, system):
-        # tuple returned to be deprecated
-        if isinstance(value, tuple):
-            self.warnings.warn(
-                'Using a tuple in the form (\'defname\', {}) to render a '
-                'Mako partial will be deprecated in the future. Use a '
-                'Mako template renderer as documented in the "Using A '
-                'Mako def name Within a Renderer Name" chapter of the '
-                'Pyramid narrative documentation instead',
-                DeprecationWarning,
-                3)
-            self.defname, value = value
         # Update the system dictionary with the values from the user
         try:
             system.update(value)
