@@ -261,83 +261,90 @@ class MakoLookupTemplateRendererTests(Base, unittest.TestCase):
         return klass(*arg, **kw)
 
     def test_call(self):
-        template = DummyTemplate()
-        instance = self._makeOne(template, None)
+        lookup = DummyLookup()
+        instance = self._makeOne('path', None, lookup)
         result = instance({}, {'system': 1})
         self.assertTrue(isinstance(result, text_type))
         self.assertEqual(result, text_('result'))
 
     def test_call_with_system_context(self):
         # lame
-        template = DummyTemplate()
-        instance = self._makeOne(template, None)
+        lookup = DummyLookup()
+        instance = self._makeOne('path', None, lookup)
         result = instance({}, {'context': 1})
         self.assertTrue(isinstance(result, text_type))
         self.assertEqual(result, text_('result'))
-        self.assertEqual(template.values, {'_context': 1})
+        self.assertEqual(lookup.values, {'_context': 1})
 
     def test_call_with_tuple_value(self):
-        template = DummyTemplate()
-        instance = self._makeOne(template, None)
+        lookup = DummyLookup()
+        instance = self._makeOne('path', None, lookup)
         warnings = DummyWarnings()
         instance.warnings = warnings
         result = instance(('fub', {}), {'context': 1})
-        self.assertEqual(template.deffed, 'fub')
+        self.assertEqual(lookup.deffed, 'fub')
         self.assertEqual(result, text_('result'))
-        self.assertEqual(template.values, {'_context': 1})
+        self.assertEqual(lookup.values, {'_context': 1})
         self.assertEqual(len(warnings.msgs), 1)
 
     def test_call_with_defname(self):
-        template = DummyTemplate()
-        instance = self._makeOne(template, 'defname')
+        lookup = DummyLookup()
+        instance = self._makeOne('path', 'defname', lookup)
         result = instance({}, {'system': 1})
         self.assertTrue(isinstance(result, text_type))
         self.assertEqual(result, text_('result'))
 
     def test_call_with_defname_with_tuple_value(self):
-        template = DummyTemplate()
-        instance = self._makeOne(template, 'defname')
+        lookup = DummyLookup()
+        instance = self._makeOne('path', 'defname', lookup)
         warnings = DummyWarnings()
         instance.warnings = warnings
         result = instance(('defname', {}), {'context': 1})
-        self.assertEqual(template.deffed, 'defname')
+        self.assertEqual(lookup.deffed, 'defname')
         self.assertEqual(result, text_('result'))
-        self.assertEqual(template.values, {'_context': 1})
+        self.assertEqual(lookup.values, {'_context': 1})
         self.assertEqual(len(warnings.msgs), 1)
 
     def test_call_with_defname_with_tuple_value_twice(self):
-        template = DummyTemplate()
-        instance1 = self._makeOne(template, 'defname')
+        lookup = DummyLookup()
+        instance1 = self._makeOne('path', 'defname', lookup)
         warnings = DummyWarnings()
         instance1.warnings = warnings
         result1 = instance1(('defname1', {}), {'context': 1})
-        self.assertEqual(template.deffed, 'defname1')
+        self.assertEqual(lookup.deffed, 'defname1')
         self.assertEqual(result1, text_('result'))
-        self.assertEqual(template.values, {'_context': 1})
-        instance2 = self._makeOne(template, 'defname')
+        self.assertEqual(lookup.values, {'_context': 1})
+        instance2 = self._makeOne('path', 'defname', lookup)
         warnings = DummyWarnings()
         instance2.warnings = warnings
         result2 = instance2(('defname2', {}), {'context': 2})
-        self.assertNotEqual(template.deffed, 'defname1')
-        self.assertEqual(template.deffed, 'defname2')
+        self.assertNotEqual(lookup.deffed, 'defname1')
+        self.assertEqual(lookup.deffed, 'defname2')
         self.assertEqual(result2, text_('result'))
-        self.assertEqual(template.values, {'_context': 2})
+        self.assertEqual(lookup.values, {'_context': 2})
 
     def test_call_with_nondict_value(self):
-        template = DummyTemplate()
-        instance = self._makeOne(template, None)
+        lookup = DummyLookup()
+        instance = self._makeOne('path', None, lookup)
         self.assertRaises(ValueError, instance, None, {})
 
     def test_call_render_raises(self):
         from pyramid_mako import MakoRenderingException
-        template = DummyTemplate(render_exc=NotImplementedError)
-        instance = self._makeOne(template, None)
+        lookup = DummyLookup(exc=NotImplementedError)
+        instance = self._makeOne('path', None, lookup)
         try:
             instance({}, {})
         except MakoRenderingException as e:
             self.assertTrue('NotImplementedError' in e.text)
         else: # pragma: no cover
             raise AssertionError
+
+    def test_template(self):
+        lookup = DummyLookup()
+        instance = self._makeOne('path', None, lookup)
+        result = instance.template.render_unicode()
+        self.assertTrue(isinstance(result, text_type))
+        self.assertEqual(result, text_('result'))
 
 class TestIntegrationWithDirectories(unittest.TestCase):
     def setUp(self):
@@ -614,23 +621,20 @@ class TestMakoRenderingException(unittest.TestCase):
         self.assertEqual(repr(exc), 'text')
 
 class DummyLookup(object):
-    directories = True
+    def __init__(self, exc=None):
+        self.exc = exc
 
     def get_template(self, path):
-        return DummyTemplate(path)
-
-class DummyTemplate(object):
-    def __init__(self, path=None, render_exc=None):
         self.path = path
-        self.render_exc = render_exc
+        return self
 
     def get_def(self, path):
         self.deffed = path
         return self
 
     def render_unicode(self, **values):
-        if self.render_exc:
-            raise self.render_exc
+        if self.exc:
+            raise self.exc
         self.values = values
         return text_('result')
 
