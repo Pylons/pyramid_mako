@@ -136,7 +136,6 @@ class MakoLookupTemplateRenderer(object):
 
 class MakoRendererFactory(object):
     lookup = None
-    load_relative = True
     renderer_factory = staticmethod(MakoLookupTemplateRenderer) # testing
 
     def __call__(self, info):
