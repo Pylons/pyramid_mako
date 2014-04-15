@@ -66,6 +66,10 @@ extensions = [
 intersphinx_mapping = {
     'pyramid':
         ('http://docs.pylonsproject.org/projects/pyramid/en/latest/', None),
+    'mako':
+        ('http://docs.makotemplates.org/en/latest/', None),
+    'python':
+        ('http://docs.python.org/', None),
     }
 
 # Add any paths that contain templates here, relative to this directory.

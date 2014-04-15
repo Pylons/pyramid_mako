@@ -188,6 +188,7 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
     error_handler = sget('error_handler', None)
     default_filters = sget('default_filters', 'h')
     imports = sget('imports', None)
+    future_imports = sget('future_imports', None)
     strict_undefined = asbool(sget('strict_undefined', False))
     preprocessor = sget('preprocessor', None)
     if not is_nonstr_iter(directories):
@@ -195,17 +196,25 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
         # we treat whitespaces and newline characters equally as list item separators.
         directories = aslist(directories, flatten=True)
     directories = [abspath_from_asset_spec(d) for d in directories]
+
     if module_directory is not None:
         module_directory = abspath_from_asset_spec(module_directory)
+
     if error_handler is not None:
         error_handler = maybe_dotted(error_handler)
+
     if default_filters is not None:
         if not is_nonstr_iter(default_filters):
-            default_filters = list(filter(
-                None, default_filters.splitlines()))
+            default_filters = aslist(default_filters)
+
     if imports is not None:
         if not is_nonstr_iter(imports):
-            imports = list(filter(None, imports.splitlines()))
+            imports = aslist(imports)
+
+    if future_imports is not None:
+        if not is_nonstr_iter(future_imports):
+            future_imports = aslist(future_imports)
+
     if preprocessor is not None:
         preprocessor = maybe_dotted(preprocessor)
 
@@ -216,6 +225,7 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
         error_handler=error_handler,
         default_filters=default_filters,
         imports=imports,
+        future_imports=future_imports,
         filesystem_checks=reload_templates,
         strict_undefined=strict_undefined,
         preprocessor=preprocessor,

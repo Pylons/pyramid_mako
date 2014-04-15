@@ -401,6 +401,26 @@ will be placed into the module level preamble of all generated Python modules.
 |                             |
 +-----------------------------+
 
+Mako ``__future__`` Import
+--------------------------
+
+String list of Python features to import, defined in :mod:`__future__` module,
+named as if they were actually imported with a ``from __future__ import
+FEATURE`` import (see :class:`mako.lookup.TemplateLookup`
+:attr:`future_imports` parameter).  Equivalent imports will be placed at first
+line into the module level preamble of all generated Python modules.
+
++-----------------------------+
+| Config File Setting Name    |
++=============================+
+|  ``mako.future_imports``    |
+|                             |
+|                             |
+|                             |
++-----------------------------+
+
+.. versionadded:: 1.0
+
 
 Mako Strict Undefined
 ---------------------
