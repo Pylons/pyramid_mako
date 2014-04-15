@@ -201,11 +201,11 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
         error_handler = maybe_dotted(error_handler)
     if default_filters is not None:
         if not is_nonstr_iter(default_filters):
-            default_filters = list(filter(
-                None, default_filters.splitlines()))
+            default_filters = aslist(default_filters)
+
     if imports is not None:
         if not is_nonstr_iter(imports):
-            imports = list(filter(None, imports.splitlines()))
+            imports = aslist(imports)
     if preprocessor is not None:
         preprocessor = maybe_dotted(preprocessor)
 
