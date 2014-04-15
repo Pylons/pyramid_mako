@@ -1,3 +1,9 @@
+Unreleased
+==========
+
+- Add new configuration variable for future_imports. See issue #22
+  (https://github.com/Pylons/pyramid_mako/issues/22)
+
 1.0a3 (2014-03-26)
 ==================
 
