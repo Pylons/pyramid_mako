@@ -1,12 +1,8 @@
-Unreleased
-==========
+1.0 (2014-04-15)
+================
 
 - Add new configuration variable for future_imports. See issue #22
   (https://github.com/Pylons/pyramid_mako/issues/22)
-
-1.0a3 (2014-03-26)
-==================
-
 - Fix issue #19, whereby pyramid.reload_templates stopped functioning due to
   changes in pyramid_mako. The lookup is now completed at template render,
   instead of when the factory returns the renderer. See:
@@ -14,10 +10,6 @@ Unreleased
 - Tuple return values in the form of ('defname', {}) are no longer supported,
   and will result in a ValueError being raised.
 - Fix an packaging issue whereby *.foo files were not included in the MANIFEST.
-
-1.0a2 (2014-02-27)
-==================
-
 - Caller-relative template lookup is now supported. Any template that fails
   to be found in the default search paths will be searched relative to the
   caller package.
