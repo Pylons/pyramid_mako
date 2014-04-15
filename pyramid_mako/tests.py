@@ -211,6 +211,12 @@ class Test_parse_options_from_settings(Base, unittest.TestCase):
         result = self._callFUT(settings)
         self.assertEqual(result['imports'], ['one', 'two'])
 
+    def test_with_imports_str_list(self):
+        settings = {'mako.directories': self.templates_dir,
+                    'mako.imports': 'one two'}
+        result = self._callFUT(settings)
+        self.assertEqual(result['imports'], ['one', 'two'])
+
     def test_with_future_imports(self):
         settings = {'mako.directories': self.templates_dir,
                     'mako.future_imports': '\none\ntwo\n\n'}
@@ -220,6 +226,12 @@ class Test_parse_options_from_settings(Base, unittest.TestCase):
     def test_with_future_imports_list(self):
         settings = {'mako.directories': self.templates_dir,
                     'mako.future_imports': ['one', 'two']}
+        result = self._callFUT(settings)
+        self.assertEqual(result['future_imports'], ['one', 'two'])
+
+    def test_with_future_imports_str_list(self):
+        settings = {'mako.directories': self.templates_dir,
+                    'mako.future_imports': 'one two'}
         result = self._callFUT(settings)
         self.assertEqual(result['future_imports'], ['one', 'two'])
 
