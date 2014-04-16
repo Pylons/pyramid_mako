@@ -1,3 +1,10 @@
+1.0.1 (2014-04-16)
+==================
+
+- Bump the required version of Mako to 0.8 or newer for issue #22 (add
+  future_imports). If you would like to use an older version of Mako, please
+  pin your dependency to version 0.3.1 of pyramid_mako.
+
 1.0 (2014-04-15)
 ================
 
