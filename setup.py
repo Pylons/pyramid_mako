@@ -1,6 +1,6 @@
 ##############################################################################
 #
-# Copyright (c) 2010 Agendaless Consulting and Contributors.
+# Copyright (c) 2014 Agendaless Consulting and Contributors.
 # All Rights Reserved.
 #
 # This software is subject to the provisions of the BSD-like license at
@@ -41,11 +41,11 @@ testing_extras = tests_require + [
 
 requires = [
     'pyramid',
-    'Mako>=0.3.6' # strict undefined
+    'Mako>=0.8'
 ]
 
 setup(name='pyramid_mako',
-      version='1.0',
+      version='1.0.1',
       description='Mako template bindings for the Pyramid web framework',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
