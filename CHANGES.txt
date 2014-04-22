@@ -1,3 +1,9 @@
+Unreleased
+==========
+
+- Fix mako.imports so that aslist() does not flatten. See issue #23
+  (https://github.com/Pylons/pyramid_mako/issues/23)
+  
 1.0.1 (2014-04-16)
 ==================
 
