@@ -213,9 +213,9 @@ class Test_parse_options_from_settings(Base, unittest.TestCase):
 
     def test_with_imports_str_list(self):
         settings = {'mako.directories': self.templates_dir,
-                    'mako.imports': 'one two'}
+                    'mako.imports': 'one two\nthree four\n'}
         result = self._callFUT(settings)
-        self.assertEqual(result['imports'], ['one', 'two'])
+        self.assertEqual(result['imports'], ['one two', 'three four'])
 
     def test_with_future_imports(self):
         settings = {'mako.directories': self.templates_dir,

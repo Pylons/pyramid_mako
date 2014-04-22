@@ -209,7 +209,7 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
 
     if imports is not None:
         if not is_nonstr_iter(imports):
-            imports = aslist(imports)
+            imports = aslist(imports, flatten=False)
 
     if future_imports is not None:
         if not is_nonstr_iter(future_imports):
