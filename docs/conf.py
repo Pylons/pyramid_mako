@@ -20,6 +20,8 @@
 import sys
 import os
 
+import pkg_resources
+
 # Add and use Pylons theme
 if 'sphinx-build' in ' '.join(sys.argv): # protect against dumb importers
     from subprocess import call, Popen, PIPE
@@ -89,7 +91,8 @@ copyright = '2013, Agendaless Consulting'
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '0.1'
+version = pkg_resources.get_distribution('pyramid_mako').version
+
 # The full version, including alpha/beta/rc tags.
 release = version
 
