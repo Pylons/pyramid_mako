@@ -182,6 +182,25 @@ variable set to ``1``, For example:
 
    $ PYRAMID_RELOAD_TEMPLATES=1 bin/pserve myproject.ini
 
+.. note::
+
+	If you are already familiar with the Mako Templating Language...
+
+	Pyramid offers a universal `pyramid.reload_templates` setting to manage
+	similar functionality across multiple template systems.
+
+	Pyramid's `reload_templates` is essentially a proxy to Mako's
+	`filesystem_checks` configuration option, with some other internal features
+	built in.  If `reload_templates` is set to  `True`, Pyramid will pass
+	`filesystem_checks = True` to Mako (and vice-versa).
+
+	Traditionally in Mako, a `TemplateLookup` instance will have the default
+	value `filesystem_checks = True`.  However, Pyramid's default behvavior is
+	for `reload_templates` to be a `None` value.  The Mako integration of
+	`pyramid_mako` may not initially behave as you expect it would, but by
+	understanding and explicitly configuring this setting, you should be able to
+	better replicate your environment.
+
 A Sample Mako Template
 ----------------------
 
