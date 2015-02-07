@@ -117,3 +117,5 @@ Michael Merickel, 2013-10-19
 Maxim Avanov, 2014-01-28
 
 Jonathan Vanasco, 2015-01-09
+
+Steve Piercy, 2015-01-20
