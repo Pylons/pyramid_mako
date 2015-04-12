@@ -22,7 +22,7 @@
   (https://github.com/Pylons/pyramid_mako/issues/19)
 - Tuple return values in the form of ('defname', {}) are no longer supported,
   and will result in a ValueError being raised.
-- Fix an packaging issue whereby *.foo files were not included in the MANIFEST.
+- Fix an packaging issue whereby \*.foo files were not included in the MANIFEST.
 - Caller-relative template lookup is now supported. Any template that fails
   to be found in the default search paths will be searched relative to the
   caller package.
