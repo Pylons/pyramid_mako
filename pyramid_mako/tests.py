@@ -629,3 +629,34 @@ class DummyTemplate(object):
 class DummyRendererInfo(object):
     def __init__(self, kw):
         self.__dict__.update(kw)
+
+
+class TestRenderStaticUrl(unittest.TestCase):
+
+    def setUp(self):
+        self.config = testing.setUp()
+        self.config.include('pyramid_mako')
+        self.config.add_static_view('static1', 'bar:static1')
+        self.config.add_static_view('static2', 'static2')
+        self.request = testing.DummyRequest()
+
+    def tearDown(self):
+        self.config.end()
+
+    def test_package_relative_url(self):
+        from pyramid.renderers import render
+        url = 'bar:static1/foo'
+        expected = self.request.static_url(url)
+        result = render('fixtures/static_url.mako',
+                        {'request': self.request, 'url': url})
+
+        self.assertEqual(result.strip(), expected)
+
+    def test_relative_url(self):
+        from pyramid.renderers import render
+        url = 'static2/foo'
+        expected = self.request.static_url(url)
+        result = render('fixtures/static_url.mako',
+                        {'request': self.request, 'url': url})
+
+        self.assertEqual(result.strip(), expected)
