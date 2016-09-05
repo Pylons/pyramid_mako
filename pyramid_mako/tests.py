@@ -187,6 +187,26 @@ class Test_parse_options_from_settings(Base, unittest.TestCase):
         result = self._callFUT(settings)
         self.assertEqual(result['preprocessor'], pyramid_mako.tests)
 
+    def test_with_preprocessor_settings(self):
+        """
+        first we check to ensure the name is replaced on true-ish value.
+        otherwise we check it doesn't change on false-ish values.
+        """
+        import pyramid_mako.tests
+        settings = {'mako.directories': self.templates_dir,
+                    'mako.preprocessor': 'pyramid_mako.tests',
+                    'mako.preprocessor_wants_settings': 'true',
+                    }
+        result = self._callFUT(settings)
+        self.assertEqual(result['preprocessor'].__name__, 'preprocessor_injector')
+
+        settings2 = {'mako.directories': self.templates_dir,
+                     'mako.preprocessor': 'pyramid_mako.tests',
+                     'mako.preprocessor_wants_settings': 'false',
+                     }
+        result2 = self._callFUT(settings2)
+        self.assertEqual(result2['preprocessor'], pyramid_mako.tests)
+
     def test_with_default_filters(self):
         settings = {'mako.directories': self.templates_dir,
                     'mako.default_filters': '\nh\ng\n\n'}
