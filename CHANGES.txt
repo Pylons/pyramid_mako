@@ -1,3 +1,11 @@
+unreleased
+==================
+
+- Add a config option for ``precompile``. If set to ``true``, the contents of
+  the template directory will be precompiled on startup. This is achieved by
+  listing the contents of the directory and invoking the `get_template` function
+  of the configured TemplateLookup object.
+
 1.0.2 (2014-04-22)
 ==================
 

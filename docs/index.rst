@@ -492,6 +492,21 @@ result of the callable will be used as the template source code.
 |                             |
 +-----------------------------+
 
+Precompile Templates
+------------------------------------
+
+If set to ``true``, all template files under each of the ``mako.directories`` 
+will be loaded and compiled into template objects at application initialization.
+
++-----------------------------+
+| Config File Setting Name    |
++=============================+
+|  ``mako.precompile``        |
+|                             |
+|                             |
+|                             |
++-----------------------------+
+
 Reloading Templates
 -------------------
 

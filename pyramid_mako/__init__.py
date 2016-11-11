@@ -191,6 +191,7 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
     future_imports = sget('future_imports', None)
     strict_undefined = asbool(sget('strict_undefined', False))
     preprocessor = sget('preprocessor', None)
+    precompile = asbool(sget('precompile', False))
     if not is_nonstr_iter(directories):
         # Since we parse a value that comes from an .ini config,
         # we treat whitespaces and newline characters equally as list item separators.
@@ -229,7 +230,26 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
         filesystem_checks=reload_templates,
         strict_undefined=strict_undefined,
         preprocessor=preprocessor,
+        precompile=precompile,
     )
+
+def recursive_precompile(lookup, extension, root_directory, directory):
+    """recursively precompile the `directory` within the `root_directory`
+     for files matching the `extension` using the defined `lookup` (an instance
+     of `PkgResourceTemplateLookup`).
+    """
+    _contents = os.listdir(directory)
+    _contents_paths = [os.path.join(directory, i) for i in _contents]
+    _directories = [i for i in _contents_paths if os.path.isdir(i)]
+    for d in _directories:
+        recursive_precompile(lookup, extension, root_directory, d)
+    _len_extension = len(extension)
+    _templates = [i for i in _contents_paths if i[-_len_extension:]==extension]
+    _len_root_directory = len(root_directory)
+    for tf in _templates:
+        # adjust the template filename by removing the prefix
+        tf_adjusted = tf[_len_root_directory:]
+        t = lookup.get_template(tf_adjusted)
 
 def add_mako_renderer(config, extension, settings_prefix='mako.'):
     """ Register a Mako renderer for a template extension.
@@ -251,9 +271,12 @@ def add_mako_renderer(config, extension, settings_prefix='mako.'):
         registry = config.registry
         opts = parse_options_from_settings(
             registry.settings, settings_prefix, config.maybe_dotted)
+        precompile = opts.pop('precompile')
         lookup = PkgResourceTemplateLookup(**opts)
-
         renderer_factory.lookup = lookup
+        if precompile:
+            for directory in lookup.directories:
+                recursive_precompile(lookup, extension, directory, directory)
 
     config.action(('mako-renderer', extension), register)
 

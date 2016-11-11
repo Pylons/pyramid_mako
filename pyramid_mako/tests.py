@@ -591,6 +591,30 @@ class TestPkgResourceTemplateLookup(unittest.TestCase):
         self.assertRaises(TopLevelLookupException, inst.get_template,
                           'pyramid_mako.tests:fixtures/notthere.mak')
 
+
+class TestPkgResourceTemplateLookupPrecompile(unittest.TestCase):
+
+    def setUp(self):
+        self.config = testing.setUp()
+        self.config.add_settings({'mako.directories':
+                                  'pyramid_mako.tests:fixtures'})
+        self.config.include('pyramid_mako')
+
+    def test_add_mako_renderer(self):
+        # there is no way to really test that we precompiled the templates 
+        # due to a lack of API hooks.  we can pass in the precompile line
+        # and see if this doesn't break
+        from pyramid.renderers import render
+        self.config.add_settings({'foo.directories':
+                                  'pyramid_mako.tests:fixtures',
+                                  'foo.precompile': True
+                                  })
+        self.config.add_mako_renderer('.mak', settings_prefix='foo.')
+        result = render('fixtures/nonminimal.mak',
+                        {'name': '<b>fred</b>'}).replace('\r', '')
+        self.assertEqual(result, text_('Hello, &lt;b&gt;fred&lt;/b&gt;!\n'))
+
+
 class TestMakoRenderingException(unittest.TestCase):
     def _makeOne(self, text):
         from pyramid_mako import MakoRenderingException
