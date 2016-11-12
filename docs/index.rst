@@ -474,6 +474,7 @@ default, this is ``false``.
 |                             |
 +-----------------------------+
 
+
 Mako Preprocessor
 -----------------
 
@@ -481,7 +482,6 @@ A callable (or a :term:`dotted Python name` which names a callable) which is
 called to preprocess the source before the template is called.  The callable
 will be passed the full template source before it is parsed. The return
 result of the callable will be used as the template source code.
-
 
 +-----------------------------+
 | Config File Setting Name    |
@@ -491,6 +491,24 @@ result of the callable will be used as the template source code.
 |                             |
 |                             |
 +-----------------------------+
+
+
+Preprocessor - Pyramid Settings
+------------------------------------
+
+If set to ``true``, the ``mako.preprocessor`` will be wrapped in a function that
+invokes the  preprocessor with pyramid's config settings as the second argument.
+This will allow the preprocessor to act based upon the settings.
+
++----------------------------------------+
+| Config File Setting Name               |
++========================================+
+|  ``mako.preprocessor_wants_settings``  |
+|                                        |
+|                                        |
+|                                        |
++----------------------------------------+
+
 
 Reloading Templates
 -------------------
