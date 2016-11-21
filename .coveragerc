@@ -1,0 +1,3 @@
+[report]
+omit = *_mak
+       pyramid_mako/nonminimal_foo
