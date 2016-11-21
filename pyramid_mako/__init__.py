@@ -191,6 +191,7 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
     future_imports = sget('future_imports', None)
     strict_undefined = asbool(sget('strict_undefined', False))
     preprocessor = sget('preprocessor', None)
+    preprocessor_wants_settings = asbool(sget('preprocessor_wants_settings', None))
     if not is_nonstr_iter(directories):
         # Since we parse a value that comes from an .ini config,
         # we treat whitespaces and newline characters equally as list item separators.
@@ -216,7 +217,13 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
             future_imports = aslist(future_imports)
 
     if preprocessor is not None:
-        preprocessor = maybe_dotted(preprocessor)
+        preprocessor_function = maybe_dotted(preprocessor)
+        if preprocessor_wants_settings:
+            def preprocessor_injector(template):
+                return preprocessor_function(template, settings)
+            preprocessor = preprocessor_injector
+        else:
+            preprocessor = preprocessor_function
 
     return dict(
         directories=directories,

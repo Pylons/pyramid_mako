@@ -1,3 +1,10 @@
+unreleased
+==================
+
+- Add a config option for ``preprocessor_wants_settings``. If set to ``true``,
+  the ``preprocessor`` will be wrapped in a function that invokes the 
+  preprocessor with pyramid's config settings as the second argument.
+
 1.0.2 (2014-04-22)
 ==================
 
