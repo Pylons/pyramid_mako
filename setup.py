@@ -36,7 +36,6 @@ docs_extras = [
 testing_extras = tests_require + [
     'nose',
     'coverage',
-    'virtualenv', # for scaffolding tests
     ]
 
 requires = [
@@ -45,7 +44,7 @@ requires = [
 ]
 
 setup(name='pyramid_mako',
-      version='1.0.2',
+      version='1.0.3dev0',
       description='Mako template bindings for the Pyramid web framework',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
