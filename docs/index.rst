@@ -500,6 +500,10 @@ If set to ``true``, the ``mako.preprocessor`` will be wrapped in a function that
 invokes the  preprocessor with pyramid's config settings as the second argument.
 This will allow the preprocessor to act based upon the settings.
 
+	def mako_preprocessor(template, settings):
+	    template = template.replace("foo", settings.get("foo_replacement"))
+	    return template
+
 +----------------------------------------+
 | Config File Setting Name               |
 +========================================+

@@ -114,6 +114,23 @@ class TestMakoRendererFactory(Base, unittest.TestCase):
         self.assertEqual(renderer.template.path, 'hello .world.mako')
         self.assertEqual(renderer.defname, 'comp')
 
+class TestIntegrationWithPreprocessorSettings(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+        self.settings = {'mako.directories': 'pyramid_mako.tests:fixtures',
+                         'mako.preprocessor': 
+                         'pyramid_mako.tests.dummy_mako_preprocessor',
+                         'mako.preprocessor_wants_settings': 'true',
+                         'replace_Hello': 'Goodbye',
+                         }
+        self.config.add_settings(self.settings)
+        self.config.include('pyramid_mako')
+
+    def test_with_preprocessor_settings(self):
+        from pyramid.renderers import render
+        rendered = render('helloinherit.mak', {}).replace('\r', '')
+        self.assertTrue(self.settings['replace_Hello'] in rendered)
+
 class Test_parse_options_from_settings(Base, unittest.TestCase):
     def _callFUT(self, settings, settings_prefix='mako.'):
         from pyramid_mako import parse_options_from_settings
@@ -193,19 +210,22 @@ class Test_parse_options_from_settings(Base, unittest.TestCase):
         otherwise we check it doesn't change on false-ish values.
         """
         import pyramid_mako.tests
+
+        # test args True
         settings = {'mako.directories': self.templates_dir,
                     'mako.preprocessor': 'pyramid_mako.tests',
                     'mako.preprocessor_wants_settings': 'true',
                     }
-        result = self._callFUT(settings)
-        self.assertEqual(result['preprocessor'].__name__, 'preprocessor_injector')
+        renderer = self._callFUT(settings)
+        self.assertEqual(renderer['preprocessor'].__name__, 'preprocessor_injector')
 
+        # test args False
         settings2 = {'mako.directories': self.templates_dir,
                      'mako.preprocessor': 'pyramid_mako.tests',
                      'mako.preprocessor_wants_settings': 'false',
                      }
-        result2 = self._callFUT(settings2)
-        self.assertEqual(result2['preprocessor'], pyramid_mako.tests)
+        renderer2 = self._callFUT(settings2)
+        self.assertEqual(renderer2['preprocessor'], pyramid_mako.tests)
 
     def test_with_default_filters(self):
         settings = {'mako.directories': self.templates_dir,
@@ -649,3 +669,9 @@ class DummyTemplate(object):
 class DummyRendererInfo(object):
     def __init__(self, kw):
         self.__dict__.update(kw)
+
+def dummy_mako_preprocessor(template, settings):
+    # demo preprocessor function
+    template = template.replace("Hello", settings.get('replace_Hello', ''))
+    return template
+
