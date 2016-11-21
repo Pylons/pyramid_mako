@@ -8,6 +8,6 @@ env*/
 dist/
 *~
 .tox
-nosetests.xml
-pyramid_jinja2/coverage.xml
+nosetests*.xml
 coverage.xml
+.eggs/
