@@ -28,10 +28,11 @@ tests_require = [
     ]
 
 docs_extras = [
-    'Sphinx',
+    'Sphinx >= 1.3.1',
     'docutils',
     'repoze.sphinx.autointerface',
-    ]
+    'pylons-sphinx-themes',
+]
 
 testing_extras = tests_require + [
     'nose',
