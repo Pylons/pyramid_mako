@@ -12,9 +12,16 @@ Overview
 Installation
 ============
 
-Install using setuptools, e.g. (within a virtualenv)::
+#. Make a :term:`virtual environment` workspace:
 
-  $ $VENV/bin/easy_install pyramid_mako
+   .. code-block:: bash
+
+      $ export VENV=~/env
+      $ python3 -m venv $VENV
+
+#. Use ``pip`` to get pyramid_mako and its direct dependencies installed:
+
+  $ $VENV/bin/pip install pyramid_mako
 
 Setup
 =====
