@@ -614,6 +614,26 @@ class TestPkgResourceTemplateLookupPrecompile(unittest.TestCase):
                         {'name': '<b>fred</b>'}).replace('\r', '')
         self.assertEqual(result, text_('Hello, &lt;b&gt;fred&lt;/b&gt;!\n'))
 
+    def test_manual_precompile(self):
+        # derive the factory, test the precompile function
+        from pyramid.renderers import render
+        from pyramid.interfaces import IRendererFactory
+        from pyramid_mako import recursive_precompile
+        self.config.add_settings({'foo.directories':
+                                  'pyramid_mako.tests:fixtures',
+                                  'foo.precompile': True
+                                  })
+        self.config.add_mako_renderer('.mak', settings_prefix='foo.')
+        mako_factory = self.config.registry.queryUtility(IRendererFactory, '.mak')
+        self.assertTrue(mako_factory is not None)
+        self.assertTrue(len(mako_factory.lookup.directories) > 0)
+        _found = False
+        for d in mako_factory.lookup.directories:
+            if d.endswith('pyramid_mako/fixtures'):
+                _found = True
+        self.assertTrue(_found)
+        for directory in mako_factory.lookup.directories:
+            recursive_precompile(mako_factory.lookup, '.mak', directory, directory)
 
 class TestMakoRenderingException(unittest.TestCase):
     def _makeOne(self, text):
