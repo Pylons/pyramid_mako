@@ -1,4 +1,5 @@
 import os
+import os.path
 import posixpath
 import sys
 
@@ -191,12 +192,16 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
     future_imports = sget('future_imports', None)
     strict_undefined = asbool(sget('strict_undefined', False))
     preprocessor = sget('preprocessor', None)
-    precompile = asbool(sget('precompile', False))
     if not is_nonstr_iter(directories):
         # Since we parse a value that comes from an .ini config,
         # we treat whitespaces and newline characters equally as list item separators.
         directories = aslist(directories, flatten=True)
     directories = [abspath_from_asset_spec(d) for d in directories]
+
+    # handle similar to `directories`, but don't decode the asset specs yet
+    precompile = sget('precompile', [])
+    if not is_nonstr_iter(precompile):
+        precompile = aslist(precompile, flatten=True)
 
     if module_directory is not None:
         module_directory = abspath_from_asset_spec(module_directory)
@@ -233,23 +238,27 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
         precompile=precompile,
     )
 
-def recursive_precompile(lookup, extension, root_directory, directory):
-    """recursively precompile the `directory` within the `root_directory`
+
+def recursive_precompile(lookup, extension, asset_spec):
+    """recursively precompile the `directory` within the `asset_spec`
      for files matching the `extension` using the defined `lookup` (an instance
      of `PkgResourceTemplateLookup`).
     """
-    _contents = os.listdir(directory)
-    _contents_paths = [os.path.join(directory, i) for i in _contents]
-    _directories = [i for i in _contents_paths if os.path.isdir(i)]
-    for d in _directories:
-        recursive_precompile(lookup, extension, root_directory, d)
+    filepath = abspath_from_asset_spec(asset_spec)
     _len_extension = len(extension)
-    _templates = [i for i in _contents_paths if i[-_len_extension:]==extension]
-    _len_root_directory = len(root_directory)
-    for tf in _templates:
-        # adjust the template filename by removing the prefix
-        tf_adjusted = tf[_len_root_directory:]
-        t = lookup.get_template(tf_adjusted)
+    if os.path.isdir(filepath):
+        _contents = [f for f in os.listdir(filepath) if f not in ('.', '..')]
+        for _file in _contents:
+            _filepath = os.path.join(filepath, _file)
+            _asset_spec = os.path.join(asset_spec, _file)
+            if os.path.isdir(_filepath):
+                recursive_precompile(lookup, extension, _asset_spec)
+            else:
+                if _file[-_len_extension:] == extension:
+                    t = lookup.get_template(_asset_spec)
+    else:
+        t = lookup.get_template(asset_spec)
+
 
 def add_mako_renderer(config, extension, settings_prefix='mako.'):
     """ Register a Mako renderer for a template extension.
@@ -275,9 +284,12 @@ def add_mako_renderer(config, extension, settings_prefix='mako.'):
         lookup = PkgResourceTemplateLookup(**opts)
         renderer_factory.lookup = lookup
         if precompile:
-            for directory in lookup.directories:
-                recursive_precompile(lookup, extension, directory, directory)
-
+            for asset_spec in precompile:
+                filepath = abspath_from_asset_spec(asset_spec)
+                if os.path.isdir(filepath):
+                    recursive_precompile(lookup, extension, asset_spec)
+                else:
+                    t = lookup.get_template(asset_spec)
     config.action(('mako-renderer', extension), register)
 
 def includeme(config):
