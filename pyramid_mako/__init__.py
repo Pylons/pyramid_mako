@@ -161,6 +161,7 @@ class MakoLookupTemplateRenderer(object):
 
 class MakoRendererFactory(object):
     lookup = None
+    registered_ext = None
     renderer_factory = staticmethod(MakoLookupTemplateRenderer) # testing
 
     def __call__(self, info):
@@ -261,6 +262,7 @@ def add_mako_renderer(config, extension, settings_prefix='mako.'):
         lookup = PkgResourceTemplateLookup(**opts)
 
         renderer_factory.lookup = lookup
+        renderer_factory.registered_ext = extension
 
     config.action(('mako-renderer', extension), register)
 
