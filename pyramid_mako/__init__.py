@@ -161,7 +161,7 @@ class MakoLookupTemplateRenderer(object):
 
 class MakoRendererFactory(object):
     lookup = None
-    registered_ext = None
+    registered_extensions = None  # debugging only
     renderer_factory = staticmethod(MakoLookupTemplateRenderer) # testing
 
     def __call__(self, info):
@@ -239,8 +239,8 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
         preprocessor=preprocessor,
     )
 
-def add_mako_renderer(config, extension, settings_prefix='mako.'):
-    """ Register a Mako renderer for a template extension.
+def add_mako_renderer(config, extensions, settings_prefix='mako.'):
+    """ Register a Mako renderer for a template extension(s).
 
     This function is available on the Pyramid configurator after
     including the package:
@@ -251,20 +251,29 @@ def add_mako_renderer(config, extension, settings_prefix='mako.'):
 
     The renderer will load its configuration from a prefix in the Pyramid
     settings dictionary. The default prefix is 'mako.'.
+    
+    Multiple extensions can be registered to a single factory and template 
+    lookup by passing in a list or tuple for the extensions arg.
+
+    .. code-block:: python
+
+       config.add_mako_renderer(('.mako', '.mak'), settings_prefix='mako.')
     """
+    extensions = extensions if isinstance(extensions, (list, tuple)) else (extensions, )
     renderer_factory = MakoRendererFactory()
-    config.add_renderer(extension, renderer_factory)
+    renderer_factory.registered_extensions = extensions
+    for ext in extensions:
+        config.add_renderer(ext, renderer_factory)
 
     def register():
-        registry = config.registry
-        opts = parse_options_from_settings(
-            registry.settings, settings_prefix, config.maybe_dotted)
-        lookup = PkgResourceTemplateLookup(**opts)
+        if renderer_factory.lookup is None:
+            opts = parse_options_from_settings(
+                config.registry.settings, settings_prefix, config.maybe_dotted)
+            lookup = PkgResourceTemplateLookup(**opts)
+            renderer_factory.lookup = lookup
 
-        renderer_factory.lookup = lookup
-        renderer_factory.registered_ext = extension
-
-    config.action(('mako-renderer', extension), register)
+    for ext in extensions:
+        config.action(('mako-renderer', ext), register)
 
 def includeme(config):
     """ Set up standard configurator registrations.  Use via:
@@ -280,6 +289,6 @@ def includeme(config):
     :func:`~pyramid_mako.add_mako_renderer` documentation for more information.
     """
     config.add_directive('add_mako_renderer', add_mako_renderer)
-
-    config.add_mako_renderer('.mako')
-    config.add_mako_renderer('.mak')
+    config.add_mako_renderer(('.mako',
+                              '.mak', 
+                              ))

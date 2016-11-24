@@ -37,6 +37,7 @@ docs_extras = [
 testing_extras = tests_require + [
     'nose',
     'coverage',
+    'pyramid_debugtoolbar',
     ]
 
 requires = [
