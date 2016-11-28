@@ -5,10 +5,6 @@ unreleased
   the ``preprocessor`` will be wrapped in a function that invokes the 
   preprocessor with pyramid's config settings as the second argument.
 
-- Added a debugtoolbar panel for debugging use
-	debugtoolbar.panels =
-		pyramid_mako.debugtoolbar.panels.main.PyramidMakoMainDebugPanel
-
 - `add_mako_renderer` now accepts a list of `extensions` instead of a single 
   `extension`. This allows for multiple extensions to share a single lookup.
   Under the previous system, `.mako` and `.mak` would be registered to different

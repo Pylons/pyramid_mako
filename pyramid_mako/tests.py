@@ -641,32 +641,6 @@ class TestMakoRenderingException(unittest.TestCase):
         self.assertEqual(str(exc), 'text')
         self.assertEqual(repr(exc), 'text')
 
-class TestDebugtoolbarPanel(Base, unittest.TestCase):
-
-    def test_panel_null(self):
-        # we shouldn't have any mako_renderers configured... but the panel should run
-        from pyramid_mako.debugtoolbar.panels.main import PyramidMakoMainDebugPanel
-        from pyramid.testing import DummyRequest
-        panel = PyramidMakoMainDebugPanel(DummyRequest())
-        self.assertTrue('mako_renderers' in panel.data)
-        self.assertTrue(len(panel.data['mako_renderers']) == 0)
-
-    def test_panel_full(self):
-        # we should have a single renders for .mako+.mak
-        from pyramid_mako.debugtoolbar.panels.main import PyramidMakoMainDebugPanel
-        from pyramid.testing import DummyRequest
-        self.config = testing.setUp()
-        self.settings = {'mako.directories': 'pyramid_mako.tests:fixtures',
-                         'mako.preprocessor': 
-                         'pyramid_mako.tests.dummy_mako_preprocessor',
-                         'mako.preprocessor_wants_settings': 'true',
-                         'replace_Hello': 'Goodbye',
-                         }
-        self.config.add_settings(self.settings)
-        self.config.include('pyramid_mako')
-        panel = PyramidMakoMainDebugPanel(DummyRequest())
-        self.assertTrue('mako_renderers' in panel.data)
-        self.assertTrue(len(panel.data['mako_renderers']) == 1)
 
 class DummyLookup(object):
     directories = True
