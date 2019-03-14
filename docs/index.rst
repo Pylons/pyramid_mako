@@ -409,7 +409,13 @@ the function completes. Is used to provide custom error-rendering functions.
 Mako Default Filters
 --------------------
 
-List of string filter names that will be applied to all Mako expressions.
+List of string filter names that will be applied to all Mako expressions (see
+`Mako Expression Filtering
+<https://docs.makotemplates.org/en/latest/filtering.html#expression-filtering>`_
+and `default_filters
+<https://docs.makotemplates.org/en/latest/filtering.html#the-default-filters-argument>`_).
+By default, this is set to ``['h']`` for HTML escaping. If you wish to use
+Mako's default filters, this should be set to ``None``.
 
 +-----------------------------+
 | Config File Setting Name    |
