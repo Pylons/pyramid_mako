@@ -353,6 +353,28 @@ to the location of the ``my.package`` Python package.
 |                             |
 +-----------------------------+
 
+Mako Caching
+----------------
+
+The values supplied here are passed in ``TemplateLookup`` as the ``cache_args``. 
+`More docs about caching in Mako
+<https://docs.makotemplates.org/en/latest/caching.html>`_.
+
++-----------------------------+
+| Config File Setting Name    |
++=============================+
+|  ``mako.cache.timeout``     |
++-----------------------------+
+|  ``mako.cache.type``        |
++-----------------------------+
+|  ``mako.cache.url``         |
++-----------------------------+
+|  ``mako.cache.dir``         |
+|                             |
+|                             |
+|                             |
++-----------------------------+
+
 Mako Module Directory
 ---------------------
 
