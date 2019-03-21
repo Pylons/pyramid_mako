@@ -370,9 +370,6 @@ The values supplied here are passed in ``TemplateLookup`` as the ``cache_args``.
 |  ``mako.cache.url``         |
 +-----------------------------+
 |  ``mako.cache.dir``         |
-|                             |
-|                             |
-|                             |
 +-----------------------------+
 
 Mako Module Directory
