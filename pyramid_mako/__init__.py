@@ -8,11 +8,6 @@ from pyramid.asset import (
 
 from pyramid.path import AssetResolver
 
-from pyramid.compat import (
-    is_nonstr_iter,
-    reraise,
-    )
-
 from pyramid.settings import asbool, aslist
 
 from mako.lookup import TemplateLookup
@@ -20,6 +15,11 @@ from mako.exceptions import (
     TemplateLookupException,
     TopLevelLookupException,
     text_error_template,
+)
+
+from .compat import (
+    is_nonstr_iter,
+    reraise,
 )
 
 class PkgResourceTemplateLookup(TemplateLookup):

@@ -8,7 +8,7 @@ import unittest
 
 from pyramid import testing
 
-from pyramid.compat import (
+from .compat import (
     text_,
     text_type,
     )
