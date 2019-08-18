@@ -18,60 +18,66 @@ from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
 try:
-    README = open(os.path.join(here, 'README.rst')).read()
-    CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
+    README = open(os.path.join(here, "README.rst")).read()
+    CHANGES = open(os.path.join(here, "CHANGES.txt")).read()
 except:
-    README = CHANGES = ''
+    README = CHANGES = ""
 
 tests_require = [
-    'WebTest >= 1.3.1', # py3 compat
+    "WebTest >= 1.3.1", # py3 compat
     ]
 
 docs_extras = [
-    'Sphinx >= 1.3.1',
-    'docutils',
-    'repoze.sphinx.autointerface',
-    'pylons-sphinx-themes',
+    "Sphinx >= 1.8.1",  # Unicode character support
+    "docutils",
+    "repoze.sphinx.autointerface",
+    "pylons-sphinx-themes >= 1.0.8",  # Ethical Ads
 ]
 
 testing_extras = tests_require + [
-    'nose',
-    'coverage',
+    "nose",
+    "coverage",
     ]
 
 requires = [
-    'pyramid',
-    'Mako>=0.8'
+    "pyramid",
+    "Mako>=1.1.0",  # py38
 ]
 
-setup(name='pyramid_mako',
-      version='1.0.3dev0',
-      description='Mako template bindings for the Pyramid web framework',
-      long_description=README + '\n\n' + CHANGES,
+setup(name="pyramid_mako",
+      version="1.1.0dev0",
+      description="Mako template bindings for the Pyramid web framework",
+      long_description=README + "\n\n" + CHANGES,
       classifiers=[
+        "Development Status :: 6 - Mature",
         "Intended Audience :: Developers",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.2",
-        "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
-        "Framework :: Pylons",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Framework :: Pyramid",
         "License :: Repoze Public License",
         ],
-      keywords='web wsgi pylons pyramid',
+      keywords=["web", "wsgi", "pyramid"],
       author="Bert JW Regeer",
       author_email="pylons-discuss@googlegroups.com",
       url="https://github.com/Pylons/pyramid_mako",
+      project_urls={
+          "Documentation": "https://docs.pylonsproject.org/projects/pyramid_mako/en/latest/",
+          "Changelog": "https://github.com/Pylons/pyramid_mako/blob/master/CHANGES.txt",
+          "Issue Tracker": "https://github.com/Pylons/pyramid_mako/issues",
+      },
       license="BSD-derived (http://www.repoze.org/LICENSE.txt)",
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
       install_requires=requires,
       extras_require = {
-          'testing':testing_extras,
-          'docs':docs_extras,
+          "testing":testing_extras,
+          "docs":docs_extras,
           },
       tests_require=tests_require,
       test_suite="pyramid_mako.tests",
