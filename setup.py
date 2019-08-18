@@ -41,11 +41,11 @@ testing_extras = tests_require + [
 
 requires = [
     "pyramid",
-    "Mako>=0.8"
+    "Mako>=1.1.0",  # py38
 ]
 
 setup(name="pyramid_mako",
-      version="1.0.3dev0",
+      version="1.1.0dev0",
       description="Mako template bindings for the Pyramid web framework",
       long_description=README + "\n\n" + CHANGES,
       classifiers=[

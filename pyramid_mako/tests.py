@@ -13,15 +13,15 @@ from pyramid.compat import (
     text_type,
     )
 
+
 class Base(object):
     def setUp(self):
         self.config = testing.setUp()
-        self.config.begin()
         here = os.path.abspath(os.path.dirname(__file__))
         self.templates_dir = os.path.join(here, 'fixtures')
 
     def tearDown(self):
-        self.config.end()
+        testing.tearDown()
 
 class TestMakoRendererFactory(Base, unittest.TestCase):
     def _getTargetClass(self):
@@ -160,6 +160,7 @@ class Test_parse_options_from_settings(Base, unittest.TestCase):
         result = self._callFUT(settings)
         self.assertEqual(result['directories'], [self.templates_dir] * 2)
 
+    @testing.skip_on('nt')
     def test_directories_list(self):
         settings = {'mako.directories': ['a', 'b']}
         result = self._callFUT(settings)
@@ -299,6 +300,7 @@ class Test_parse_options_from_settings(Base, unittest.TestCase):
         result = self._callFUT(settings)
         self.assertEqual(result['filesystem_checks'], True)
 
+    @testing.skip_on('nt')
     def test_multiple_registration_different_name(self):
         settings = {'mako.directories': 'a\n\nb',
                     'othermako.directories': 'c\n\nd',
@@ -375,7 +377,7 @@ class TestIntegrationWithDirectories(unittest.TestCase):
         self.config.include('pyramid_mako')
 
     def tearDown(self):
-        self.config.end()
+        testing.tearDown()
 
     def test_render(self):
         from pyramid.renderers import render
@@ -467,7 +469,7 @@ class TestIntegrationNoDirectories(unittest.TestCase):
         self.config.include('pyramid_mako')
 
     def tearDown(self):
-        self.config.end()
+        testing.tearDown()
 
     def test_render(self):
         from pyramid.renderers import render
