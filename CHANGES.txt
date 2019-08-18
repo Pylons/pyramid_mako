@@ -1,6 +1,10 @@
 unreleased
 ==================
 
+- Add support for Python 3.5, 3.6, 3.7.
+
+- Require ``mako >= 1.1.0``.
+
 - Add a config option for ``preprocessor_wants_settings``. If set to ``true``,
   the ``preprocessor`` will be wrapped in a function that invokes the 
   preprocessor with pyramid's config settings as the second argument.
