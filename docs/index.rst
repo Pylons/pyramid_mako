@@ -206,7 +206,7 @@ variable set to ``1``, For example:
 
     Traditionally in Mako, a ``TemplateLookup`` instance will have the default
     value ``filesystem_checks = True`` and one must explicitly disable this
-    behavior.  However, Pyramid's default behvavior is for ``reload_templates``
+    behavior.  However, Pyramid's default behavior is for ``reload_templates``
     to be ``None``, which Mako will treat as a ``False`` value for this
     setting.
 
