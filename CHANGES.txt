@@ -9,6 +9,13 @@
   the ``preprocessor`` will be wrapped in a function that invokes the 
   preprocessor with pyramid's config settings as the second argument.
 
+- `add_mako_renderer` now accepts a list of `extensions` instead of a single 
+  `extension`. This allows for multiple extensions to share a single lookup.
+  Under the previous system, `.mako` and `.mak` would be registered to different
+  render factories and template lookups; if a `.mako` referenced a `.mak` file,
+  then it would be compiled into the `.mako` template lookup and recompiled 
+  again for the `.mak` template lookup if accessed directly. 
+
 1.0.2 (2014-04-22)
 ==================
 

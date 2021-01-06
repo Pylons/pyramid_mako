@@ -643,6 +643,7 @@ class TestMakoRenderingException(unittest.TestCase):
         self.assertEqual(str(exc), 'text')
         self.assertEqual(repr(exc), 'text')
 
+
 class DummyLookup(object):
     directories = True
 
