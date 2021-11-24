@@ -1,3 +1,23 @@
-recursive-include pyramid_mako *.*_tmpl *.mako *.mak *.ico *.png *.py *.pot *.cfg *.mo *.po *.ini *.foo
-recursive-include docs *.css Makefile *.gif *.rst *.py *.gitignore
-include *.txt *.ini
+graft src/pyramid_mako
+graft tests
+graft docs
+graft .github
+
+include README.rst
+include CHANGES.txt
+include HISTORY.txt
+include RELEASING.txt
+include LICENSE.txt
+include contributing.md
+include CONTRIBUTORS.txt
+include COPYRIGHT.txt
+
+include pyproject.toml setup.cfg
+include .coveragerc .flake8
+include tox.ini rtd.txt
+
+exclude TODO.txt
+prune docs/_build
+
+recursive-exclude * __pycache__ *.py[cod]
+
