@@ -20,8 +20,8 @@ else:
     long = int
 
 
-def text_(s, encoding='latin-1', errors='strict'):
-    """ If ``s`` is an instance of ``binary_type``, return
+def text_(s, encoding="latin-1", errors="strict"):
+    """If ``s`` is an instance of ``binary_type``, return
     ``s.decode(encoding, errors)``, otherwise return ``s``"""
     if isinstance(s, binary_type):
         return s.decode(encoding, errors)
@@ -31,7 +31,7 @@ def text_(s, encoding='latin-1', errors='strict'):
 if PY2:
 
     def is_nonstr_iter(v):
-        return hasattr(v, '__iter__')
+        return hasattr(v, "__iter__")
 
 
 else:
@@ -39,7 +39,7 @@ else:
     def is_nonstr_iter(v):
         if isinstance(v, str):
             return False
-        return hasattr(v, '__iter__')
+        return hasattr(v, "__iter__")
 
 
 if PY2:  # pragma: no cover
