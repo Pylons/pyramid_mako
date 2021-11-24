@@ -1,3 +1,3 @@
-<%namespace name="comp" file="pyramid_mako.tests:fixtures/components.mak"/>
+<%namespace name="comp" file="tests:fixtures/components.mak"/>
 Namespace
 Hello ${comp.comp()}
