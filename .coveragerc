@@ -1,3 +1,4 @@
 [report]
-omit = *_mak
-       pyramid_mako/nonminimal_foo
+omit = *_mak,
+       nonminimal_foo
+       *.mak.py
