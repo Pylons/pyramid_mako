@@ -37,8 +37,8 @@ extensions = ["sphinx.ext.autodoc", "sphinx.ext.intersphinx"]
 
 # Looks for objects in external projects
 intersphinx_mapping = {
-    "pyramid": ("http://docs.pylonsproject.org/projects/pyramid/en/latest/", None),
-    "mako": ("http://docs.makotemplates.org/en/latest/", None),
+    "pyramid": ("https://docs.pylonsproject.org/projects/pyramid/en/latest/", None),
+    "mako": ("https://docs.makotemplates.org/en/latest/", None),
     "python": ("https://docs.python.org/3/", None),
 }
 
