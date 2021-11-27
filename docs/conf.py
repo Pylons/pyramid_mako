@@ -111,7 +111,7 @@ html_theme_path = pylons_sphinx_themes.get_html_themes_path()
 
 html_theme_options = dict(
     github_url="https://github.com/Pylons/pyramid_mako",
-    canonical_url="http://docs.pylonsproject.org/projects/pyramid_mako/en/latest/",
+    canonical_url="https://docs.pylonsproject.org/projects/pyramid_mako/en/latest/",
 )
 
 
