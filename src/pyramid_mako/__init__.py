@@ -2,46 +2,40 @@ import os
 import posixpath
 import sys
 
-from pyramid.asset import (
-    abspath_from_asset_spec,
-    )
-
-from pyramid.path import AssetResolver
-
-from pyramid.settings import asbool, aslist
-
-from mako.lookup import TemplateLookup
 from mako.exceptions import (
     TemplateLookupException,
     TopLevelLookupException,
     text_error_template,
 )
+from mako.lookup import TemplateLookup
+from pyramid.asset import abspath_from_asset_spec
+from pyramid.path import AssetResolver
+from pyramid.settings import asbool, aslist
 
-from .compat import (
-    is_nonstr_iter,
-    reraise,
-)
+from .compat import is_nonstr_iter, reraise
+
 
 class PkgResourceTemplateLookup(TemplateLookup):
     """TemplateLookup subclass that handles asset specification URIs"""
+
     def adjust_uri(self, uri, relativeto):
         """Called from within a Mako template, avoids adjusting the
         uri if it looks like an asset specification"""
         # Don't adjust asset spec names
         isabs = os.path.isabs(uri)
-        if (not isabs) and (':' in uri):
+        if (not isabs) and (":" in uri):
             return uri
-        if not(isabs) and ('$' in uri):
-            return uri.replace('$', ':')
+        if not (isabs) and ("$" in uri):
+            return uri.replace("$", ":")
         if relativeto is not None:
-            relativeto = relativeto.replace('$', ':')
-            if not(':' in uri) and (':' in relativeto):
-                if uri.startswith('/'):
+            relativeto = relativeto.replace("$", ":")
+            if not (":" in uri) and (":" in relativeto):
+                if uri.startswith("/"):
                     return uri
-                pkg, relto = relativeto.split(':')
+                pkg, relto = relativeto.split(":")
                 _uri = posixpath.join(posixpath.dirname(relto), uri)
-                return '{0}:{1}'.format(pkg, _uri)
-            if not(':' in uri) and not(':' in relativeto):
+                return "{0}:{1}".format(pkg, _uri)
+            if not (":" in uri) and not (":" in relativeto):
                 return posixpath.join(posixpath.dirname(relativeto), uri)
         return TemplateLookup.adjust_uri(self, uri, relativeto)
 
@@ -55,12 +49,12 @@ class PkgResourceTemplateLookup(TemplateLookup):
 
         """
         isabs = os.path.isabs(uri)
-        if (not isabs) and (':' in uri):
+        if (not isabs) and (":" in uri):
             # Windows can't cope with colons in filenames, so we replace the
             # colon with a dollar sign in the filename mako uses to actually
             # store the generated python code in the mako module_directory or
             # in the temporary location of mako's modules
-            adjusted = uri.replace(':', '$')
+            adjusted = uri.replace(":", "$")
             try:
                 if self.filesystem_checks:
                     return self._check(adjusted, self._collection[adjusted])
@@ -72,7 +66,8 @@ class PkgResourceTemplateLookup(TemplateLookup):
                     srcfile = asset.abspath()
                     return self._load(srcfile, adjusted)
                 raise TopLevelLookupException(
-                    "Can not locate template for uri %r" % uri)
+                    "Can not locate template for uri %r" % uri
+                )
         try:
             return TemplateLookup.get_template(self, uri)
         except TemplateLookupException:
@@ -80,6 +75,7 @@ class PkgResourceTemplateLookup(TemplateLookup):
                 return self._load(uri, uri)
             else:
                 raise
+
 
 class MakoRenderingException(Exception):
     def __init__(self, text):
@@ -90,8 +86,9 @@ class MakoRenderingException(Exception):
 
     __str__ = __repr__
 
+
 class MakoLookupTemplateRenderer(object):
-    """ Render a :term:`Mako` template using the ``template``.
+    """Render a :term:`Mako` template using the ``template``.
     If a ``defname`` is defined, in the form of
     ``package:path/to/template#defname.mako``, a function named ``defname``
     inside the ``template`` will then be rendered.
@@ -101,7 +98,7 @@ class MakoLookupTemplateRenderer(object):
     def template(self):
         spec = self.spec
         isabspath = os.path.isabs(spec)
-        colon_in_name = ':' in spec
+        colon_in_name = ":" in spec
         isabsspec = colon_in_name and (not isabspath)
         isrelspec = (not isabsspec) and (not isabspath)
 
@@ -131,15 +128,15 @@ class MakoLookupTemplateRenderer(object):
         try:
             system.update(value)
         except (TypeError, ValueError):
-            raise ValueError('renderer was passed non-dictionary as value')
+            raise ValueError("renderer was passed non-dictionary as value")
 
         # Check if 'context' in the dictionary
-        context = system.pop('context', None)
+        context = system.pop("context", None)
 
         # Rename 'context' to '_context' because Mako internally already has a
         # variable named 'context'
         if context is not None:
-            system['_context'] = context
+            system["_context"] = context
 
         template = self.template
         if self.defname is not None:
@@ -150,48 +147,50 @@ class MakoLookupTemplateRenderer(object):
             try:
                 exc_info = sys.exc_info()
                 errtext = text_error_template().render(
-                    error=exc_info[1],
-                    traceback=exc_info[2]
-                    )
+                    error=exc_info[1], traceback=exc_info[2]
+                )
                 reraise(MakoRenderingException(errtext), None, exc_info[2])
             finally:
                 del exc_info
 
         return result
 
+
 class MakoRendererFactory(object):
     lookup = None
-    renderer_factory = staticmethod(MakoLookupTemplateRenderer) # testing
+    renderer_factory = staticmethod(MakoLookupTemplateRenderer)  # testing
 
     def __call__(self, info):
         defname = None
-        asset, ext = info.name.rsplit('.', 1)
-        if '#' in asset:
-            asset, defname = asset.rsplit('#', 1)
+        asset, ext = info.name.rsplit(".", 1)
+        if "#" in asset:
+            asset, defname = asset.rsplit("#", 1)
 
-        spec = '%s.%s' % (asset, ext)
+        spec = "%s.%s" % (asset, ext)
 
         return self.renderer_factory(self.lookup, spec, defname, info.package)
 
+
 def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
-    """ Parse options for use with Mako's TemplateLookup from settings."""
+    """Parse options for use with Mako's TemplateLookup from settings."""
+
     def sget(name, default=None):
         return settings.get(settings_prefix + name, default)
 
-    reload_templates = sget('reload_templates', None)
+    reload_templates = sget("reload_templates", None)
     if reload_templates is None:
-        reload_templates = settings.get('pyramid.reload_templates', None)
+        reload_templates = settings.get("pyramid.reload_templates", None)
     reload_templates = asbool(reload_templates)
-    directories = sget('directories', [])
-    module_directory = sget('module_directory', None)
-    input_encoding = sget('input_encoding', 'utf-8')
-    error_handler = sget('error_handler', None)
-    default_filters = sget('default_filters', 'h')
-    imports = sget('imports', None)
-    future_imports = sget('future_imports', None)
-    strict_undefined = asbool(sget('strict_undefined', False))
-    preprocessor = sget('preprocessor', None)
-    preprocessor_wants_settings = asbool(sget('preprocessor_wants_settings', None))
+    directories = sget("directories", [])
+    module_directory = sget("module_directory", None)
+    input_encoding = sget("input_encoding", "utf-8")
+    error_handler = sget("error_handler", None)
+    default_filters = sget("default_filters", "h")
+    imports = sget("imports", None)
+    future_imports = sget("future_imports", None)
+    strict_undefined = asbool(sget("strict_undefined", False))
+    preprocessor = sget("preprocessor", None)
+    preprocessor_wants_settings = asbool(sget("preprocessor_wants_settings", None))
     if not is_nonstr_iter(directories):
         # Since we parse a value that comes from an .ini config,
         # we treat whitespaces and newline characters equally as list item separators.
@@ -219,8 +218,10 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
     if preprocessor is not None:
         preprocessor_function = maybe_dotted(preprocessor)
         if preprocessor_wants_settings:
+
             def preprocessor_injector(template):
                 return preprocessor_function(template, settings)
+
             preprocessor = preprocessor_injector
         else:
             preprocessor = preprocessor_function
@@ -238,8 +239,9 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
         preprocessor=preprocessor,
     )
 
-def add_mako_renderer(config, extension, settings_prefix='mako.'):
-    """ Register a Mako renderer for a template extension.
+
+def add_mako_renderer(config, extension, settings_prefix="mako."):
+    """Register a Mako renderer for a template extension.
 
     This function is available on the Pyramid configurator after
     including the package:
@@ -257,15 +259,17 @@ def add_mako_renderer(config, extension, settings_prefix='mako.'):
     def register():
         registry = config.registry
         opts = parse_options_from_settings(
-            registry.settings, settings_prefix, config.maybe_dotted)
+            registry.settings, settings_prefix, config.maybe_dotted
+        )
         lookup = PkgResourceTemplateLookup(**opts)
 
         renderer_factory.lookup = lookup
 
-    config.action(('mako-renderer', extension), register)
+    config.action(("mako-renderer", extension), register)
+
 
 def includeme(config):
-    """ Set up standard configurator registrations.  Use via:
+    """Set up standard configurator registrations.  Use via:
 
     .. code-block:: python
 
@@ -277,7 +281,7 @@ def includeme(config):
     added via the ``config.add_mako_renderer`` directive. See
     :func:`~pyramid_mako.add_mako_renderer` documentation for more information.
     """
-    config.add_directive('add_mako_renderer', add_mako_renderer)
+    config.add_directive("add_mako_renderer", add_mako_renderer)
 
-    config.add_mako_renderer('.mako')
-    config.add_mako_renderer('.mak')
+    config.add_mako_renderer(".mako")
+    config.add_mako_renderer(".mak")
