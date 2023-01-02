@@ -191,10 +191,10 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
     strict_undefined = asbool(sget("strict_undefined", False))
     preprocessor = sget("preprocessor", None)
     preprocessor_wants_settings = asbool(sget("preprocessor_wants_settings", None))
-    cache_type = sget('cache.type', None)
-    cache_dir = sget('cache.dir', module_directory)
-    cache_timeout = sget('cache.timeout', None)
-    cache_url = sget('cache.url', None)
+    cache_type = sget("cache.type", None)
+    cache_dir = sget("cache.dir", module_directory)
+    cache_timeout = sget("cache.timeout", None)
+    cache_url = sget("cache.url", None)
 
     if not is_nonstr_iter(directories):
         # Since we parse a value that comes from an .ini config,
@@ -247,7 +247,7 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
             url=cache_url,
             type=cache_type,
             dir=cache_dir,
-        )
+        ),
     )
 
 
