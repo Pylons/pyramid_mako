@@ -5,6 +5,9 @@ Unreleased
 
 - Remove support for Python <3.7
 
+- Add support for setting cache arguments as well as the cache implementation
+  to use in the configuration passed to `pyramid_mako`
+
 1.1.0 (2019-08-18)
 ==================
 
