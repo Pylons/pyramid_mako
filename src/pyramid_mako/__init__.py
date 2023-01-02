@@ -191,6 +191,7 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
     strict_undefined = asbool(sget("strict_undefined", False))
     preprocessor = sget("preprocessor", None)
     preprocessor_wants_settings = asbool(sget("preprocessor_wants_settings", None))
+    cache_impl = sget("cache_impl", "beaker")
     cache_type = sget("cache.type", None)
     cache_dir = sget("cache.dir", module_directory)
     cache_timeout = sget("cache.timeout", None)
@@ -242,6 +243,7 @@ def parse_options_from_settings(settings, settings_prefix, maybe_dotted):
         filesystem_checks=reload_templates,
         strict_undefined=strict_undefined,
         preprocessor=preprocessor,
+        cache_impl=cache_impl,
         cache_args=dict(
             timeout=cache_timeout,
             url=cache_url,
