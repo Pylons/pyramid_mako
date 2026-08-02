@@ -13,7 +13,7 @@ include CONTRIBUTORS.txt
 include COPYRIGHT.txt
 
 include pyproject.toml setup.cfg
-include .coveragerc .flake8
+include .coveragerc .flake8 .mailmap
 include tox.ini rtd.txt
 
 exclude TODO.txt
