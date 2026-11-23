@@ -1,12 +1,21 @@
-Unreleased
+unreleased
 ==========
 
-- Add support for Python 3.11
+- Drop support for Python 2.7 and 3.4 through 3.10.
 
-- Remove support for Python <3.7
+- Add support for Python 3.11, 3.12, 3.13, 3.14, and 3.15.
+
+- Require ``pyramid >= 1.3``, the first release with
+  ``pyramid.path.AssetResolver``.
 
 - Add support for setting cache arguments as well as the cache implementation
   to use in the configuration passed to `pyramid_mako`
+
+- Stop using the deprecated ``pkg_resources`` api in the docs.
+
+- Switch packaging metadata from ``setup.cfg`` to ``pyproject.toml`` and use
+  an SPDX license expression. The ``testing`` and ``docs`` extras are replaced
+  by dependency groups.
 
 1.1.0 (2019-08-18)
 ==================

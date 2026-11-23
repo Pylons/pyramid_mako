@@ -55,11 +55,9 @@ if PY2:  # pragma: no cover
             locs = globs
         exec("""exec code in globs, locs""")
 
-    exec_(
-        """def reraise(tp, value, tb=None):
+    exec_("""def reraise(tp, value, tb=None):
     raise tp, value, tb
-"""
-    )
+""")
 
 else:  # pragma: no cover
     import builtins

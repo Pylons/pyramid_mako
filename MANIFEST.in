@@ -5,18 +5,14 @@ graft .github
 
 include README.rst
 include CHANGES.txt
-include HISTORY.txt
-include RELEASING.txt
 include LICENSE.txt
-include contributing.md
 include CONTRIBUTORS.txt
 include COPYRIGHT.txt
 
-include pyproject.toml setup.cfg
-include .coveragerc .flake8 .mailmap
-include tox.ini rtd.txt
+include pyproject.toml
+include .coveragerc .mailmap
+include tox.ini .readthedocs.yaml
 
-exclude TODO.txt
 prune docs/_build
 
 recursive-exclude * __pycache__ *.py[cod]

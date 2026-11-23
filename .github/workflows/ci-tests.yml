@@ -1,87 +1,108 @@
 name: Build and test
 
 on:
-    # Only on pushes to master or one of the release branches we build on push
+    # Only on pushes to main or one of the release branches we build on push
     push:
         branches:
             - main
             - "[0-9].[0-9]+-branch"
-        tags:
-            - "*"
     # Build pull requests
     pull_request:
+
+# Drop all GITHUB_TOKEN permissions so ci-tests cannot modify the repo.
+# Checkout still works because the repo is public.
+permissions: {}
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
 
 jobs:
     test:
         strategy:
+            # See https://github.com/actions/runner-images
             matrix:
                 py:
-                    - "3.7"
-                    - "3.8"
-                    - "3.9"
-                    - "3.10"
                     - "3.11"
-                    - "pypy-3.8"
+                    - "3.12"
+                    - "3.13"
+                    - "3.14"
+                    - "3.15"
+                    - "pypy-3.11"
                 os:
-                    - "ubuntu-22.04"
-                    - "windows-2022"
-                    - "macos-12"
-                architecture:
-                    - x64
-                    - x86
+                    - "ubuntu-24.04" # x64
+                    - "windows-2025" # x64
+                    - "macos-15" # arm64
+                    - "macos-15-intel" # x64
 
-                exclude:
-                    # Linux and macOS don't have x86 python
-                    - os: "ubuntu-22.04"
-                      architecture: x86
-                    - os: "macos-12"
-                      architecture: x86
-        name: "Python: ${{ matrix.py }}-${{ matrix.architecture }} on ${{ matrix.os }}"
+        name: "Python: ${{ matrix.py }} on ${{ matrix.os }}"
         runs-on: ${{ matrix.os }}
         steps:
-            - uses: actions/checkout@v4
-            - name: Setup python
-              uses: actions/setup-python@v4
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+            - name: Setup uv
+              uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
               with:
                   python-version: ${{ matrix.py }}
-                  architecture: ${{ matrix.architecture }}
-            - run: pip install tox
-            - name: Running tox
-              run: tox -e py
+            - name: Running tox for current python version
+              run: uvx --with tox-uv tox -e py
+
+    old-pyramid:
+        strategy:
+            matrix:
+                include:
+                    # oldest pyramid with pyramid.path.AssetResolver, which pyramid_mako imports
+                    - py: "3.11"
+                      toxenv: "py311-pyramid13"
+                    # last 1.x release, before 2.0 removed deprecated apis
+                    - py: "3.11"
+                      toxenv: "py311-pyramid110"
+        name: "Pyramid: ${{ matrix.toxenv }}"
+        runs-on: ubuntu-24.04
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+            - name: Setup uv
+              uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+              with:
+                  python-version: ${{ matrix.py }}
+            - run: uvx --with tox-uv tox -e ${{ matrix.toxenv }}
+
     coverage:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         name: Validate coverage
         steps:
-            - uses: actions/checkout@v4
-            - name: Setup python 3.10
-              uses: actions/setup-python@v4
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
-                  python-version: "3.11"
-                  architecture: x64
-
-            - run: pip install tox
-            - run: tox -e py311,coverage
+                  persist-credentials: false
+            - name: Setup uv
+              uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+              with:
+                  python-version: "3.14"
+            - run: uvx --with tox-uv tox -e py314-cover,coverage
     docs:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         name: Build the documentation
         steps:
-            - uses: actions/checkout@v4
-            - name: Setup python
-              uses: actions/setup-python@v4
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
-                  python-version: "3.11"
-                  architecture: x64
-            - run: pip install tox
-            - run: tox -e docs
+                  persist-credentials: false
+            - name: Setup uv
+              uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+              with:
+                  python-version: "3.14"
+            - run: uvx --with tox-uv tox -e docs
     lint:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         name: Lint the package
         steps:
-            - uses: actions/checkout@v4
-            - name: Setup python
-              uses: actions/setup-python@v4
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
-                  python-version: "3.11"
-                  architecture: x64
-            - run: pip install tox
-            - run: tox -e lint
+                  persist-credentials: false
+            - name: Setup uv
+              uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+              with:
+                  python-version: "3.14"
+            - run: uvx --with tox-uv tox -e lint

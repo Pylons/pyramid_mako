@@ -607,6 +607,7 @@ API Documentation
    :maxdepth: 1
 
    api
+   changes
 
 Reporting Bugs / Development Versions
 =====================================

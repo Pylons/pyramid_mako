@@ -1,13 +1,83 @@
+[project]
+name = "pyramid_mako"
+version = "1.2.dev0"
+description = "Mako template bindings for the Pyramid web framework"
+dynamic = ["readme"]
+
+license = "LicenseRef-Repoze-BSD-derived"
+license-files = ["LICENSE.txt"]
+authors = [
+  { name = "Delta Regeer", email = "pylons-discuss@googlegroups.com" },
+]
+maintainers = [
+  { name = "Pylons Project", email = "pylons-discuss@googlegroups.com" },
+]
+
+requires-python = ">=3.11"
+dependencies = [
+  "Mako >= 1.1.0",
+  "pyramid >= 1.3",  # pyramid.path.AssetResolver
+]
+
+keywords = ["mako", "pylons", "pyramid", "web", "wsgi"]
+classifiers = [
+  "Development Status :: 6 - Mature",
+  "Framework :: Pyramid",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+
+[project.urls]
+Changelog = "https://docs.pylonsproject.org/projects/pyramid_mako/en/latest/changes.html"
+Documentation = "https://docs.pylonsproject.org/projects/pyramid_mako/en/latest/"
+Homepage = "https://github.com/Pylons/pyramid_mako"
+"Issue Tracker" = "https://github.com/Pylons/pyramid_mako/issues"
+
+[dependency-groups]
+docs = [
+  "Sphinx >= 1.8.1",
+  "docutils",
+  "pylons-sphinx-themes >= 1.0.9",
+  "repoze.sphinx.autointerface",
+]
+lint = [
+  "black ~= 26.10.0",
+  "build",
+  "check-manifest",
+  "flake8",
+  "flake8-bugbear",
+  "isort",
+  "readme_renderer",
+  "twine",
+]
+testing = [
+  "WebTest >= 1.3.1",
+  "coverage >= 5.0",
+  "pytest >= 6.0",
+  "pytest-cov",
+]
+
 [build-system]
-requires = ["setuptools >= 41"]
+requires = ["setuptools >= 77"]  # SPDX license expressions
 build-backend = "setuptools.build_meta"
 
 [tool.black]
-target-version = ['py37', 'py38', 'py39', 'py310', 'py311']
+target-version = ["py311", "py312", "py313", "py314", "py315"]
 exclude = '''
 /(
   \.git
   | .tox
+  | .venv
+  | build
+  | dist
 )/
 '''
 
@@ -26,6 +96,14 @@ known_first_party = "pyramid_mako"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
+addopts = "-W always"
 python_files = "test_*.py"
-testpaths = ["tests"]
-addopts = "-W always --cov --cov-report=term-missing"
+testpaths = [
+  "tests",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+readme = { file = ["README.rst", "CHANGES.txt"], content-type = "text/x-rst" }
