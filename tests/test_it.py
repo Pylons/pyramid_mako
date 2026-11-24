@@ -728,6 +728,14 @@ class TestMakoRenderingException(unittest.TestCase):
         self.assertEqual(repr(exc), "text")
 
 
+class TestCompat(unittest.TestCase):
+    def test_text_decodes_bytes(self):
+        self.assertEqual(text_(b"caf\xc3\xa9", "utf-8"), "caf\xe9")
+
+    def test_text_passes_through_text(self):
+        self.assertEqual(text_("caf\xe9"), "caf\xe9")
+
+
 class DummyLookup(object):
     directories = True
 

@@ -10,7 +10,7 @@ include CONTRIBUTORS.txt
 include COPYRIGHT.txt
 
 include pyproject.toml
-include .coveragerc .mailmap
+include .mailmap
 include tox.ini .readthedocs.yaml
 
 prune docs/_build

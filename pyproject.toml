@@ -102,6 +102,21 @@ testpaths = [
   "tests",
 ]
 
+[tool.coverage.run]
+parallel = true
+source = ["pyramid_mako", "tests"]
+
+[tool.coverage.paths]
+source = [
+  "src/pyramid_mako",
+  "*/src/pyramid_mako",
+  "*/site-packages/pyramid_mako",
+]
+
+[tool.coverage.report]
+show_missing = true
+precision = 2
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
